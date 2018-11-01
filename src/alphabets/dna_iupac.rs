@@ -1,7 +1,7 @@
 /// Definitions for the DNA alphabet
 
 use errors::SeqError;
-use complement::Complement;
+use alphabets::Complement;
 use std::convert::TryFrom;
 
 /// DNA is represented as an enum, including all IUPAC redundant bases.
