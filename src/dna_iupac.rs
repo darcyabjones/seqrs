@@ -1,6 +1,5 @@
 /// Definitions for the DNA alphabet
 
-
 use errors::SeqError;
 use complement::Complement;
 use std::convert::TryFrom;
@@ -23,7 +22,6 @@ pub enum DNA {
     H, // A|C|T
     V, // A|C|G
     N, // A|T|G|C
-    Gap,
 }
 
 /// Read DNA from bytes.
@@ -50,7 +48,6 @@ impl TryFrom<u8> for DNA {
             b'h' | b'H' => Ok(DNA::H),
             b'v' | b'V' => Ok(DNA::V),
             b'n' | b'N' => Ok(DNA::N),
-            b'-'        => Ok(DNA::Gap),
             b           => Err(SeqError::AlphabetReadError { base: b as char }),
         }
     }
@@ -75,7 +72,6 @@ impl From<DNA> for u8 {
             DNA::H   => b'H',
             DNA::V   => b'V',
             DNA::N   => b'N',
-            DNA::Gap => b'-',
         }
     }
 }
@@ -85,52 +81,50 @@ impl From<DNA> for u8 {
 impl PartialEq for DNA {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
-            (DNA::Gap, DNA::Gap)                      => true,
-            (DNA::Gap, _       ) | (     _, DNA::Gap) => false,
-            (  DNA::N, _       ) | (     _, DNA::N  ) => true,
-            (  DNA::A, DNA::A  )                      => true,
-            (  DNA::T, DNA::T  )                      => true,
-            (  DNA::G, DNA::G  )                      => true,
-            (  DNA::C, DNA::C  )                      => true,
-            (  DNA::R, DNA::R  )                      => true,
-            (  DNA::Y, DNA::Y  )                      => true,
-            (  DNA::S, DNA::S  )                      => true,
-            (  DNA::W, DNA::W  )                      => true,
-            (  DNA::K, DNA::K  )                      => true,
-            (  DNA::M, DNA::M  )                      => true,
-            (  DNA::R, DNA::A  ) | (DNA::R, DNA::G  ) => true,
-            (  DNA::Y, DNA::C  ) | (DNA::Y, DNA::T  ) => true,
-            (  DNA::S, DNA::G  ) | (DNA::S, DNA::C  ) => true,
-            (  DNA::W, DNA::A  ) | (DNA::W, DNA::T  ) => true,
-            (  DNA::K, DNA::G  ) | (DNA::K, DNA::T  ) => true,
-            (  DNA::M, DNA::A  ) | (DNA::M, DNA::C  ) => true,
-            (  DNA::A, DNA::R  ) | (DNA::G, DNA::R  ) => true,
-            (  DNA::C, DNA::Y  ) | (DNA::T, DNA::Y  ) => true,
-            (  DNA::G, DNA::S  ) | (DNA::C, DNA::S  ) => true,
-            (  DNA::A, DNA::W  ) | (DNA::T, DNA::W  ) => true,
-            (  DNA::G, DNA::K  ) | (DNA::T, DNA::K  ) => true,
-            (  DNA::A, DNA::M  ) | (DNA::C, DNA::M  ) => true,
-            (  DNA::R, DNA::S  ) | (DNA::S, DNA::R  ) => true, // G match
-            (  DNA::R, DNA::K  ) | (DNA::K, DNA::R  ) => true, // G match
-            (  DNA::R, DNA::W  ) | (DNA::W, DNA::R  ) => true, // A match
-            (  DNA::R, DNA::M  ) | (DNA::M, DNA::R  ) => true, // A match
-            (  DNA::Y, DNA::S  ) | (DNA::S, DNA::Y  ) => true, // C match
-            (  DNA::Y, DNA::M  ) | (DNA::M, DNA::Y  ) => true, // C match
-            (  DNA::Y, DNA::W  ) | (DNA::W, DNA::Y  ) => true, // T match
-            (  DNA::Y, DNA::K  ) | (DNA::K, DNA::Y  ) => true, // T match
-            (  DNA::S, DNA::K  ) | (DNA::K, DNA::S  ) => true, // G match
-            (  DNA::S, DNA::M  ) | (DNA::M, DNA::S  ) => true, // C match
-            (  DNA::W, DNA::M  ) | (DNA::M, DNA::W  ) => true, // A match
-            (  DNA::W, DNA::K  ) | (DNA::K, DNA::W  ) => true, // T match
-            (  DNA::B, DNA::A  ) | (DNA::A, DNA::B  ) => false,
-            (  DNA::D, DNA::C  ) | (DNA::C, DNA::D  ) => false,
-            (  DNA::H, DNA::G  ) | (DNA::G, DNA::H  ) => false,
-            (  DNA::V, DNA::T  ) | (DNA::T, DNA::V  ) => false,
-            (  DNA::B, _       ) | (     _, DNA::B  ) => true,
-            (  DNA::D, _       ) | (     _, DNA::D  ) => true,
-            (  DNA::H, _       ) | (     _, DNA::H  ) => true,
-            (  DNA::V, _       ) | (     _, DNA::V  ) => true,
-            _                                         => false, // Everything else
+            (DNA::N, _     ) | (     _, DNA::N) => true,
+            (DNA::A, DNA::A)                    => true,
+            (DNA::T, DNA::T)                    => true,
+            (DNA::G, DNA::G)                    => true,
+            (DNA::C, DNA::C)                    => true,
+            (DNA::R, DNA::R)                    => true,
+            (DNA::Y, DNA::Y)                    => true,
+            (DNA::S, DNA::S)                    => true,
+            (DNA::W, DNA::W)                    => true,
+            (DNA::K, DNA::K)                    => true,
+            (DNA::M, DNA::M)                    => true,
+            (DNA::R, DNA::A) | (DNA::R, DNA::G) => true,
+            (DNA::Y, DNA::C) | (DNA::Y, DNA::T) => true,
+            (DNA::S, DNA::G) | (DNA::S, DNA::C) => true,
+            (DNA::W, DNA::A) | (DNA::W, DNA::T) => true,
+            (DNA::K, DNA::G) | (DNA::K, DNA::T) => true,
+            (DNA::M, DNA::A) | (DNA::M, DNA::C) => true,
+            (DNA::A, DNA::R) | (DNA::G, DNA::R) => true,
+            (DNA::C, DNA::Y) | (DNA::T, DNA::Y) => true,
+            (DNA::G, DNA::S) | (DNA::C, DNA::S) => true,
+            (DNA::A, DNA::W) | (DNA::T, DNA::W) => true,
+            (DNA::G, DNA::K) | (DNA::T, DNA::K) => true,
+            (DNA::A, DNA::M) | (DNA::C, DNA::M) => true,
+            (DNA::R, DNA::S) | (DNA::S, DNA::R) => true, // G match
+            (DNA::R, DNA::K) | (DNA::K, DNA::R) => true, // G match
+            (DNA::R, DNA::W) | (DNA::W, DNA::R) => true, // A match
+            (DNA::R, DNA::M) | (DNA::M, DNA::R) => true, // A match
+            (DNA::Y, DNA::S) | (DNA::S, DNA::Y) => true, // C match
+            (DNA::Y, DNA::M) | (DNA::M, DNA::Y) => true, // C match
+            (DNA::Y, DNA::W) | (DNA::W, DNA::Y) => true, // T match
+            (DNA::Y, DNA::K) | (DNA::K, DNA::Y) => true, // T match
+            (DNA::S, DNA::K) | (DNA::K, DNA::S) => true, // G match
+            (DNA::S, DNA::M) | (DNA::M, DNA::S) => true, // C match
+            (DNA::W, DNA::M) | (DNA::M, DNA::W) => true, // A match
+            (DNA::W, DNA::K) | (DNA::K, DNA::W) => true, // T match
+            (DNA::B, DNA::A) | (DNA::A, DNA::B) => false,
+            (DNA::D, DNA::C) | (DNA::C, DNA::D) => false,
+            (DNA::H, DNA::G) | (DNA::G, DNA::H) => false,
+            (DNA::V, DNA::T) | (DNA::T, DNA::V) => false,
+            (DNA::B, _     ) | (     _, DNA::B) => true,
+            (DNA::D, _     ) | (     _, DNA::D) => true,
+            (DNA::H, _     ) | (     _, DNA::H) => true,
+            (DNA::V, _     ) | (     _, DNA::V) => true,
+            _                                   => false, // Everything else
         }
     }
 }
@@ -157,7 +151,6 @@ impl Complement for DNA {
             DNA::D => DNA::H,
             DNA::H => DNA::D,
             DNA::N => DNA::N,
-            DNA::Gap => DNA::Gap,
         }
     }
 }
@@ -172,7 +165,6 @@ mod tests {
     fn test_from() {
         assert_eq!(DNA::try_from(b'A').unwrap(), DNA::A);
         assert_eq!(DNA::try_from(b'a').unwrap(), DNA::A);
-        assert_eq!(DNA::try_from(b'-').unwrap(), DNA::Gap);
         assert_eq!(DNA::try_from(b'T').unwrap(), DNA::T);
         assert_eq!(DNA::try_from(b'c').unwrap(), DNA::C);
         assert_eq!(DNA::try_from(b'G').unwrap(), DNA::G);
