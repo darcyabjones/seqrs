@@ -1,8 +1,14 @@
-/// Gapped alphabets...
+/// Generalised gapped alphabets.
+///
+/// Gapped alphabets extend regular alphabets with a sum type and wrapping
+/// the base in a struct.
 
 use alphabets::Complement;
 use std::convert::TryFrom;
 
+
+/// A gapped alphabet combines any type with a new enum.
+/// `Occ` for occupied.
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub enum Gapped<T> {
     Gap,
@@ -13,6 +19,8 @@ pub enum Gapped<T> {
 impl<T: TryFrom<u8>> TryFrom<u8> for Gapped<T> {
     type Error = T::Error;
 
+
+    /// Parse a byte character as a gap, and pass non-gap to wrapped type.
     fn try_from(base: u8) -> Result<Self, Self::Error> {
         match base {
             b'-' => Ok(Gapped::Gap),
@@ -22,6 +30,8 @@ impl<T: TryFrom<u8>> TryFrom<u8> for Gapped<T> {
 }
 
 
+/// Complement is implemented for any wrapped type that also implements
+/// complement. A gap is always it's own complement.
 impl<T: Complement> Complement for Gapped<T> {
     fn complement(&self) -> Self {
         match self {
@@ -34,6 +44,10 @@ impl<T: Complement> Complement for Gapped<T> {
 
 #[cfg(test)]
 mod tests {
+    //! Testing gaps.
+    //! There are a couple of odd type hints required here that I'd like to
+    //! get rid of.
+
     use super::*;
     use alphabets::DNA;
 

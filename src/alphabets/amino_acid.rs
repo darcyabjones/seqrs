@@ -1,6 +1,5 @@
 /// Definitions for the Protein alphabet
 
-
 use errors::SeqError;
 use std::convert::TryFrom;
 

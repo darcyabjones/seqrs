@@ -57,21 +57,21 @@ impl TryFrom<u8> for DNA {
 impl From<DNA> for u8 {
     fn from(base: DNA) -> Self {
         match base {
-            DNA::A   => b'A',
-            DNA::T   => b'T',
-            DNA::G   => b'G',
-            DNA::C   => b'C',
-            DNA::R   => b'R',
-            DNA::Y   => b'Y',
-            DNA::S   => b'S',
-            DNA::W   => b'W',
-            DNA::K   => b'K',
-            DNA::M   => b'M',
-            DNA::B   => b'B',
-            DNA::D   => b'D',
-            DNA::H   => b'H',
-            DNA::V   => b'V',
-            DNA::N   => b'N',
+            DNA::A => b'A',
+            DNA::T => b'T',
+            DNA::G => b'G',
+            DNA::C => b'C',
+            DNA::R => b'R',
+            DNA::Y => b'Y',
+            DNA::S => b'S',
+            DNA::W => b'W',
+            DNA::K => b'K',
+            DNA::M => b'M',
+            DNA::B => b'B',
+            DNA::D => b'D',
+            DNA::H => b'H',
+            DNA::V => b'V',
+            DNA::N => b'N',
         }
     }
 }
