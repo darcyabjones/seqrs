@@ -7,3 +7,5 @@ extern crate failure;
 
 pub mod errors;
 pub mod alphabets;
+pub mod charcase;
+pub mod seq;

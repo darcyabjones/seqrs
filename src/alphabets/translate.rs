@@ -1,7 +1,7 @@
-/// Translate trait.
-///
+//! Translate trait.
+//!
 
 
-pub trait Translate<P> {
-    fn translate(&self) -> P;
+pub trait Translate<T> {
+    fn translate(&self) -> T;
 }

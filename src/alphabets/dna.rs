@@ -1,7 +1,8 @@
-/// Definitions for the DNA alphabet
+//! Definitions for the DNA alphabet
 
 use errors::SeqError;
 use alphabets::Complement;
+use charcase::to_upper;
 use std::convert::TryFrom;
 
 /// DNA is represented as an enum, including all IUPAC redundant bases.
@@ -26,52 +27,52 @@ pub enum DNA {
 
 /// Read DNA from bytes.
 /// Use try from because it's possible to receive invalid input.
-impl TryFrom<u8> for DNA {
+impl TryFrom<char> for DNA {
 
     // Associated type for try from.
     type Error = SeqError;
 
-    fn try_from(base: u8) -> Result<Self, Self::Error> {
-        match base {
-            b'a' | b'A' => Ok(DNA::A),
-            b't' | b'T' => Ok(DNA::T),
-            b'g' | b'G' => Ok(DNA::G),
-            b'c' | b'C' => Ok(DNA::C),
-            b'r' | b'R' => Ok(DNA::R),
-            b'y' | b'Y' => Ok(DNA::Y),
-            b's' | b'S' => Ok(DNA::S),
-            b'w' | b'W' => Ok(DNA::W),
-            b'k' | b'K' => Ok(DNA::K),
-            b'm' | b'M' => Ok(DNA::M),
-            b'b' | b'B' => Ok(DNA::B),
-            b'd' | b'D' => Ok(DNA::D),
-            b'h' | b'H' => Ok(DNA::H),
-            b'v' | b'V' => Ok(DNA::V),
-            b'n' | b'N' => Ok(DNA::N),
-            b           => Err(SeqError::AlphabetReadError { base: b as char }),
+    fn try_from(base: char) -> Result<Self, Self::Error> {
+        match base.to_ascii_uppercase() {
+            'A' => Ok(DNA::A),
+            'T' => Ok(DNA::T),
+            'G' => Ok(DNA::G),
+            'C' => Ok(DNA::C),
+            'R' => Ok(DNA::R),
+            'Y' => Ok(DNA::Y),
+            'S' => Ok(DNA::S),
+            'W' => Ok(DNA::W),
+            'K' => Ok(DNA::K),
+            'M' => Ok(DNA::M),
+            'B' => Ok(DNA::B),
+            'D' => Ok(DNA::D),
+            'H' => Ok(DNA::H),
+            'V' => Ok(DNA::V),
+            'N' => Ok(DNA::N),
+            b   => Err(SeqError::AlphabetReadError { base: b as char }),
         }
     }
 }
 
 /// Convert DNA to byte representation.
-impl From<DNA> for u8 {
+impl From<DNA> for char {
     fn from(base: DNA) -> Self {
         match base {
-            DNA::A => b'A',
-            DNA::T => b'T',
-            DNA::G => b'G',
-            DNA::C => b'C',
-            DNA::R => b'R',
-            DNA::Y => b'Y',
-            DNA::S => b'S',
-            DNA::W => b'W',
-            DNA::K => b'K',
-            DNA::M => b'M',
-            DNA::B => b'B',
-            DNA::D => b'D',
-            DNA::H => b'H',
-            DNA::V => b'V',
-            DNA::N => b'N',
+            DNA::A => 'A',
+            DNA::T => 'T',
+            DNA::G => 'G',
+            DNA::C => 'C',
+            DNA::R => 'R',
+            DNA::Y => 'Y',
+            DNA::S => 'S',
+            DNA::W => 'W',
+            DNA::K => 'K',
+            DNA::M => 'M',
+            DNA::B => 'B',
+            DNA::D => 'D',
+            DNA::H => 'H',
+            DNA::V => 'V',
+            DNA::N => 'N',
         }
     }
 }
@@ -156,6 +157,8 @@ impl Complement for DNA {
 }
 
 
+
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -163,12 +166,12 @@ mod tests {
 
     #[test]
     fn test_from() {
-        assert_eq!(DNA::try_from(b'A').unwrap(), DNA::A);
-        assert_eq!(DNA::try_from(b'a').unwrap(), DNA::A);
-        assert_eq!(DNA::try_from(b'T').unwrap(), DNA::T);
-        assert_eq!(DNA::try_from(b'c').unwrap(), DNA::C);
-        assert_eq!(DNA::try_from(b'G').unwrap(), DNA::G);
-        assert_eq!(DNA::try_from(b'w').unwrap(), DNA::W);
+        assert_eq!(DNA::try_from('A').unwrap(), DNA::A);
+        assert_eq!(DNA::try_from('a').unwrap(), DNA::A);
+        assert_eq!(DNA::try_from('T').unwrap(), DNA::T);
+        assert_eq!(DNA::try_from('c').unwrap(), DNA::C);
+        assert_eq!(DNA::try_from('G').unwrap(), DNA::G);
+        assert_eq!(DNA::try_from('w').unwrap(), DNA::W);
     }
 
     #[test]
@@ -204,6 +207,7 @@ mod tests {
         assert_eq!(DNA::S, DNA::M); // GC != AC
         assert_eq!(DNA::S, DNA::S); // GC != AC
     }
+
 
     #[bench]
     fn bench_complement(b: &mut Bencher) {
