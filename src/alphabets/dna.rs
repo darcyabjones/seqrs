@@ -2,11 +2,11 @@
 
 use errors::SeqError;
 use alphabets::Complement;
-use charcase::to_upper;
 use std::convert::TryFrom;
+use std::str::FromStr;
 
 /// DNA is represented as an enum, including all IUPAC redundant bases.
-#[derive(Debug, Clone, Copy, Hash)]
+#[derive(Debug, Clone, Copy, Hash, PartialOrd, Ord)]
 pub enum DNA {
     A,
     T,
@@ -25,13 +25,28 @@ pub enum DNA {
     N, // A|T|G|C
 }
 
-/// Read DNA from bytes.
+
 /// Use try from because it's possible to receive invalid input.
 impl TryFrom<char> for DNA {
 
     // Associated type for try from.
     type Error = SeqError;
 
+    /// Convert a char to an enum variant.
+    /// Returning `Err` if character isn't valid.
+    ///
+    /// # Examples:
+    ///
+    /// WARNING: try_from is currently unstable, so this example cannot be
+    /// tested.
+    ///
+    /// ```rust,ignore
+    /// use seqrs::alphabets::DNA;
+    /// use std::convert::{TryFrom, TryInto};
+    ///
+    /// let base: DNA = DNA::try_from('a').unwrap();
+    /// assert_eq!(base, DNA::A);
+    /// ```
     fn try_from(base: char) -> Result<Self, Self::Error> {
         match base.to_ascii_uppercase() {
             'A' => Ok(DNA::A),
@@ -49,13 +64,27 @@ impl TryFrom<char> for DNA {
             'H' => Ok(DNA::H),
             'V' => Ok(DNA::V),
             'N' => Ok(DNA::N),
-            b   => Err(SeqError::AlphabetReadError { base: b as char }),
+            b   => Err(SeqError::AlphabetReadError { base: b }),
         }
     }
 }
 
-/// Convert DNA to byte representation.
 impl From<DNA> for char {
+
+    /// Convert DNA to char representation.
+    ///
+    /// # Examples:
+    ///
+    /// ```
+    /// use seqrs::alphabets::DNA;
+    /// use std::convert::{From, Into};
+    ///
+    /// assert_eq!(char::from(DNA::A), 'A');
+    ///
+    /// // Into is also implicitly defined.
+    /// let base: char = DNA::A.into();
+    /// assert_eq!(base, 'A');
+    /// ```
     fn from(base: DNA) -> Self {
         match base {
             DNA::A => 'A',
@@ -77,9 +106,75 @@ impl From<DNA> for char {
     }
 }
 
-/// Define equality for DNA bases.
-/// For redundant bases, if it is possible to match evaluate as true.
+/// Use try from because it's possible to receive invalid input.
+impl TryFrom<u8> for DNA {
+
+    // Associated type for try from.
+    type Error = SeqError;
+
+    /// Convert a u8 to an enum variant.
+    /// Returning `Err` if character isn't valid.
+    ///
+    /// # Examples:
+    ///
+    /// WARNING: try_from is currently unstable, so this example cannot be
+    /// tested.
+    ///
+    /// ```rust,ignore
+    /// use seqrs::alphabets::DNA;
+    /// use std::convert::{TryFrom, TryInto};
+    ///
+    /// let base: DNA = DNA::try_from(b'a').unwrap();
+    /// assert_eq!(base, DNA::A);
+    /// ```
+    fn try_from(base: u8) -> Result<Self, Self::Error> {
+        Self::try_from(base as char)
+    }
+}
+
+impl From<DNA> for u8 {
+
+    /// Convert DNA to byte representation.
+    ///
+    /// # Examples:
+    ///
+    /// ```
+    /// use seqrs::alphabets::DNA;
+    /// use std::convert::{From, Into};
+    ///
+    /// assert_eq!(u8::from(DNA::A), b'A');
+    ///
+    /// // Into is also implicitly defined.
+    /// let base: u8 = DNA::A.into();
+    /// assert_eq!(base, b'A');
+    /// ```
+    fn from(base: DNA) -> Self {
+        // Casting char -> u32 -> u8 is safe in this instance because we
+        // control what `char`s it could be.
+        (char::from(base) as u32) as u8
+    }
+}
+
+
 impl PartialEq for DNA {
+
+    /// Define equality for DNA bases.
+    /// For redundant bases, if it is possible to match evaluate as true.
+    ///
+    /// # Examples:
+    ///
+    /// ```
+    /// use seqrs::alphabets::DNA;
+    ///
+    /// assert!(DNA::A == DNA::A);
+    /// assert_eq!(DNA::A, DNA::A);
+    /// assert_eq!(DNA::A, DNA::N);
+    /// assert_eq!(DNA::C, DNA::S);
+    ///
+    /// // != is implicitly defined
+    /// assert_ne!(DNA::C, DNA::G);
+    /// assert_ne!(DNA::S, DNA::W);
+    /// ```
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
             (DNA::N, _     ) | (     _, DNA::N) => true,
@@ -130,17 +225,28 @@ impl PartialEq for DNA {
     }
 }
 
-/// Uses the partialeq definition.
+/// Implicitly uses the partialeq definition.
 impl Eq for DNA {}
 
-impl<T> Default for DNA {
+impl Default for DNA {
     /// Returns [`N`][DNA::N].
     #[inline]
     fn default() -> Self { DNA::N }
 }
 
-/// How to complement the alphabet.
 impl Complement for DNA {
+
+    /// How to complement the alphabet.
+    ///
+    /// # Examples:
+    ///
+    /// ```
+    /// use seqrs::alphabets::Complement;
+    /// use seqrs::alphabets::DNA;
+    ///
+    /// assert_eq!(DNA::A.complement(), DNA::T);
+    /// assert_eq!(DNA::A.complement().complement(), DNA::A);
+    /// ```
     fn complement(&self) -> Self {
         match self {
             DNA::A => DNA::T,
@@ -161,8 +267,6 @@ impl Complement for DNA {
         }
     }
 }
-
-
 
 
 #[cfg(test)]

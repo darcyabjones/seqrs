@@ -5,15 +5,15 @@ use alphabets::Translate;
 use alphabets::AminoAcid;
 use alphabets::AminoAcid::*;
 use alphabets::DNA;
-use std::convert::TryFrom;
-
+use errors::SeqError;
+use std::convert::{TryFrom, TryInto};
 
 /// Codons represented as tuple struct.
 /// The tuple struct with public fields is used to make pattern matching
 /// easier. I think it's a reasonable choice, given that these should
 /// essentially be immutable and the order of codon elements has an
 /// unambiguous interpretation.
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Codon<T>(pub T, pub T, pub T);
 
 
@@ -36,6 +36,86 @@ impl<T> Codon<T> {
         self.2
     }
 }
+
+impl<T> Codon<T> {
+
+    /// Parse a 3 member array as a Codon.
+    ///
+    /// # Examples:
+    ///
+    /// ```
+    /// use seqrs::alphabets::DNA;
+    /// use seqrs::alphabets::Codon;
+    ///
+    /// let codon = Codon::<DNA>::try_from_iter("aaa".chars()).unwrap();
+    /// assert_eq!(codon, Codon(DNA::A, DNA::A, DNA::A));
+    /// ```
+    pub fn try_from_iter<U, I>(bases: I) -> Result<Self, SeqError> where 
+        U: TryInto<T>,
+        I: IntoIterator<Item = U>
+    {
+        let mut bases = bases.into_iter();
+
+        let one = Self::item_to_type(bases.next())?;
+        let two = Self::item_to_type(bases.next())?;
+        let three = Self::item_to_type(bases.next())?;
+
+        Ok(Codon(one, two, three))
+    }
+
+    /// TODO: Fix error so that it propagates through try_from.
+    fn item_to_type<U: TryInto<T>>(item: Option<U>) -> Result<T, SeqError> {
+        item.ok_or_else(|| SeqError::CodonLengthError { n: 0 })?
+            .try_into()
+            .map_err(|_| SeqError::CodonLengthError { n: 0})
+    }
+}
+
+
+impl<T: Default> Default for Codon<T> {
+    /// Returns codon with contained types defaults.
+    ///
+    /// Examples:
+    ///
+    /// ```
+    /// use seqrs::alphabets::Codon;
+    /// use seqrs::alphabets::DNA;
+    ///
+    /// let c = Codon::<DNA>::default();
+    /// assert_eq!(c, Codon(DNA::default(), DNA::default(), DNA::default()));
+    /// ```
+    #[inline]
+    fn default() -> Self {
+        Self(T::default(), T::default(), T::default())
+    }
+}
+
+impl<T: TryFrom<char>> TryFrom<[char; 3]> for Codon<T> {
+    type Error = T::Error;
+
+    /// Parse a 3 member array as a Codon.
+    ///
+    /// # Examples:
+    /// 
+    /// WARNING: try_from is currently unstable, so this example cannot be
+    /// tested.
+    ///
+    /// ```rust,ignore
+    /// use seqrs::alphabets::DNA;
+    /// use seqrs::alphabets::Codon;
+    /// use std::convert::{TryFrom, TryInto};
+    ///
+    /// let codon = Codon<DNA>::try_from(['a', 'a', 'a']).unwrap();
+    /// assert_eq!(codon, Codon(DNA::A, DNA::A, DNA::A));
+    /// ```
+    fn try_from(bases: [char; 3]) -> Result<Self, Self::Error> {
+        let one   = T::try_from(bases[0])?;
+        let two   = T::try_from(bases[1])?;
+        let three = T::try_from(bases[2])?;
+        Ok(Codon(one, two, three))
+    }
+}
+
 
 
 impl Translate<AminoAcid> for Codon<DNA> {
@@ -131,6 +211,19 @@ mod tests {
     use super::*;
     use alphabets::DNA;
     use alphabets::AminoAcid;
+    use std::convert::TryFrom;
+
+    #[test]
+    fn test_try_from() {
+        let codon = Codon::<DNA>::try_from(['a', 'a', 'a']).unwrap();
+        assert_eq!(codon, Codon(DNA::A, DNA::A, DNA::A));
+
+        let codon = Codon::<DNA>::try_from_iter("aaa".chars()).unwrap();
+        assert_eq!(codon, Codon(DNA::A, DNA::A, DNA::A));
+
+        let codon = Codon::<DNA>::try_from_iter([DNA::A, DNA::A, DNA::A].iter()).unwrap();
+        assert_eq!(codon, Codon(DNA::A, DNA::A, DNA::A));
+    }
 
     #[test]
     fn test_eq() {
