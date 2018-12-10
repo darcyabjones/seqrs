@@ -133,6 +133,12 @@ impl PartialEq for DNA {
 /// Uses the partialeq definition.
 impl Eq for DNA {}
 
+impl<T> Default for DNA {
+    /// Returns [`N`][DNA::N].
+    #[inline]
+    fn default() -> Self { DNA::N }
+}
+
 /// How to complement the alphabet.
 impl Complement for DNA {
     fn complement(&self) -> Self {

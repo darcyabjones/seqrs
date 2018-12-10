@@ -10,7 +10,7 @@ use std::convert::TryFrom;
 
 /// A gapped alphabet combines any type with a new enum.
 /// `Occ` for occupied.
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Hash, PartialEq, PartialOrd, Eq, Ord)]
 pub enum Gapped<T> {
     Gap,
     Base(T),
@@ -81,6 +81,7 @@ impl<T> Gapped<T> {
     /// assert_eq!(upper, Gapped::Base('A'));
     /// println!("still can print: {:?} into {:?}", base, upper);
     /// ```
+    #[inline]
     pub fn as_ref(&self) -> Gapped<&T> {
         match *self {
             Gapped::Base(ref x) => Gapped::Base(x),
@@ -107,68 +108,6 @@ impl<T> Gapped<T> {
         match *self {
             Gapped::Base(ref mut x) => Gapped::Base(x),
             Gapped::Gap => Gapped::Gap,
-        }
-    }
-
-    /// Maps an `Gapped<T>` to `Gapped<U>` by applying a function to a contained value.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use seqrs::alphabets::Gapped;
-    ///
-    /// let base = Gapped::Base('a');
-    /// let maybe_base = base.map(|s| s.to_ascii_uppercase());
-    /// assert_eq!(maybe_base, Gapped::Base('A'));
-    /// ```
-    #[inline]
-    pub fn map<U, F: FnOnce(T) -> U>(self, f: F) -> Gapped<U> {
-        match self {
-            Gapped::Base(x) => Gapped::Base(f(x)),
-            Gapped::Gap => Gapped::Gap,
-        }
-    }
-
-    /// Applies a function to the contained value (if any),
-    /// or returns the provided default (if not).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use seqrs::alphabets::Gapped;
-    ///
-    /// let base: Gapped<char> = Gapped::Base('A');
-    /// assert_eq!(base.map_or('T', |v| v.to_ascii_lowercase()), 'a');
-    ///
-    /// let base: Gapped<char> = Gapped::Gap;
-    /// assert_eq!(base.map_or('T', |v| v.to_ascii_lowercase()), 'T');
-    /// ```
-    #[inline]
-    pub fn map_or<U, F: FnOnce(T) -> U>(self, default: U, f: F) -> U {
-        match self {
-            Gapped::Base(t) => f(t),
-            Gapped::Gap => default,
-        }
-    }
-
-    /// Applies a function to the contained value (if any),
-    /// or computes a default (if not).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use seqrs::alphabets::Gapped;
-    ///
-    /// let k = 21;
-    ///
-    /// let x: Gapped<char> = Gapped::Base('C');
-    /// assert_eq!(x.map_or_else(|| 2 * k, |_| 4), 4);
-    /// ```
-    #[inline]
-    pub fn map_or_else<U, D: FnOnce() -> U, F: FnOnce(T) -> U>(self, default: D, f: F) -> U {
-        match self {
-            Gapped::Base(t) => f(t),
-            Gapped::Gap => default(),
         }
     }
 
@@ -283,8 +222,139 @@ impl<T> Gapped<T> {
         }
     }
 
+    /// Maps an `Gapped<T>` to `Gapped<U>` by applying a function to a contained value.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use seqrs::alphabets::Gapped;
+    ///
+    /// let base = Gapped::Base('a');
+    /// let maybe_base = base.map(|s| s.to_ascii_uppercase());
+    /// assert_eq!(maybe_base, Gapped::Base('A'));
+    /// ```
+    #[inline]
+    pub fn map<U, F: FnOnce(T) -> U>(self, f: F) -> Gapped<U> {
+        match self {
+            Gapped::Base(x) => Gapped::Base(f(x)),
+            Gapped::Gap => Gapped::Gap,
+        }
+    }
+
+    /// Applies a function to the contained value (if any),
+    /// or returns the provided default (if not).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use seqrs::alphabets::Gapped;
+    ///
+    /// let base: Gapped<char> = Gapped::Base('A');
+    /// assert_eq!(base.map_or('T', |v| v.to_ascii_lowercase()), 'a');
+    ///
+    /// let base: Gapped<char> = Gapped::Gap;
+    /// assert_eq!(base.map_or('T', |v| v.to_ascii_lowercase()), 'T');
+    /// ```
+    #[inline]
+    pub fn map_or<U, F: FnOnce(T) -> U>(self, default: U, f: F) -> U {
+        match self {
+            Gapped::Base(t) => f(t),
+            Gapped::Gap => default,
+        }
+    }
+
+    /// Applies a function to the contained value (if any),
+    /// or computes a default (if not).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use seqrs::alphabets::Gapped;
+    ///
+    /// let k = 21;
+    ///
+    /// let x: Gapped<char> = Gapped::Base('C');
+    /// assert_eq!(x.map_or_else(|| 2 * k, |_| 4), 4);
+    /// ```
+    #[inline]
+    pub fn map_or_else<U, D: FnOnce() -> U, F: FnOnce(T) -> U>(self, default: D, f: F) -> U {
+        match self {
+            Gapped::Base(t) => f(t),
+            Gapped::Gap => default(),
+        }
+    }
+
+    /// Transforms the `Gapped<T>` into a [`Result<T, E>`], mapping [`Base(v)`] to
+    /// [`Ok(v)`] and [`Gap`] to [`Err(err)`].
+    ///
+    /// Arguments passed to `ok_or` are eagerly evaluated; if you are passing the
+    /// result of a function call, it is recommended to use [`ok_or_else`], which is
+    /// lazily evaluated.
+    ///
+    /// [`Result<T, E>`]: ../../std/result/enum.Result.html
+    /// [`Ok(v)`]: ../../std/result/enum.Result.html#variant.Ok
+    /// [`Err(err)`]: ../../std/result/enum.Result.html#variant.Err
+    /// [`Gap`]: #variant.Gap
+    /// [`Base(v)`]: #variant.Base
+    /// [`ok_or_else`]: #method.ok_or_else
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use seqrs::alphabets::Gapped;
+    /// use seqrs::alphabets::DNA;
+    ///
+    /// let x = Gapped::Base(DNA::A);
+    /// assert_eq!(x.ok_or(0), Ok(DNA::A));
+    ///
+    /// let x: Gapped<DNA> = Gapped::Gap;
+    /// assert_eq!(x.ok_or(0), Err(0));
+    /// ```
+    #[inline]
+    pub fn ok_or<E>(self, err: E) -> Result<T, E> {
+        match self {
+            Gapped::Base(v) => Ok(v),
+            Gapped::Gap => Err(err),
+        }
+    }
+
+    /// Transforms the `Gapped<T>` into a [`Result<T, E>`], mapping [`Base(v)`] to
+    /// [`Ok(v)`] and [`Gap`] to [`Err(err())`].
+    ///
+    /// [`Result<T, E>`]: ../../std/result/enum.Result.html
+    /// [`Ok(v)`]: ../../std/result/enum.Result.html#variant.Ok
+    /// [`Err(err())`]: ../../std/result/enum.Result.html#variant.Err
+    /// [`Gap`]: #variant.Gap
+    /// [`Base(v)`]: #variant.Base
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use seqrs::alphabets::Gapped;
+    /// use seqrs::alphabets::DNA;
+    ///
+    /// let x = Gapped::Base(DNA::A);
+    /// assert_eq!(x.ok_or_else(|| 0), Ok(DNA::A));
+    ///
+    /// let x: Gapped<DNA> = Gapped::Gap;
+    /// assert_eq!(x.ok_or_else(|| 0), Err(0));
+    /// ```
+    #[inline]
+    pub fn ok_or_else<E, F: FnOnce() -> E>(self, err: F) -> Result<T, E> {
+        match self {
+            Gapped::Base(v) => Ok(v),
+            Gapped::Gap => Err(err()),
+        }
+    }
+
 }
 
+
+impl<T> Default for Gapped<T> {
+    /// Returns [`Gap`][Gapped::Gap].
+    #[inline]
+    fn default() -> Gapped<T> { Gapped::Gap }
+}
 
 
 impl<T: TryFrom<char>> TryFrom<char> for Gapped<T> {
@@ -312,6 +382,8 @@ impl<T: Complement> Complement for Gapped<T> {
 }
 
 
+/// Translate is implemented for any wrapped type that also implements
+/// translate.
 impl<A, T: Translate<A>> Translate<Gapped<A>> for Gapped<T> {
     fn translate(&self) -> Gapped<A> {
         match self {

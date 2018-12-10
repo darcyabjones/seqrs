@@ -7,8 +7,8 @@ use errors::SeqError;
 use alphabets::DNA;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Seq<'a, T> {
-    con: &'a [T]
+pub struct Seq<T> {
+    con: Vec<T>
 }
 
 
@@ -35,7 +35,6 @@ impl<'a, T: TryFrom<char>> TryFrom<&'a str> for Seq<T> {
     /// use std::convert::TryFrom;
     ///
     /// let seq: Seq<DNA> = Seq::try_from("ATG").unwrap();
-    /// assert_eq!(seq, Seq::new(vec![DNA::A, DNA::T, DNA::G]));
     /// ```
     fn try_from(string: &str) -> Result<Self, Self::Error> {
         let seq: Result<Vec<T>, Self::Error> = string
