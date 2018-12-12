@@ -2,7 +2,9 @@
 
 use errors::SeqError;
 use alphabets::Complement;
-use std::convert::TryFrom;
+use std::convert::{TryFrom, TryInto};
+use std::convert::AsRef;
+use std::borrow::Borrow;
 use std::str::FromStr;
 
 /// DNA is represented as an enum, including all IUPAC redundant bases.
@@ -25,9 +27,17 @@ pub enum DNA {
     N, // A|T|G|C
 }
 
+impl TryFrom<char> for DNA {
+
+    type Error = SeqError;
+
+    fn try_from(base: char) -> Result<Self, Self::Error> {
+        (&base).try_into()
+    }
+}
 
 /// Use try from because it's possible to receive invalid input.
-impl TryFrom<char> for DNA {
+impl TryFrom<&char> for DNA {
 
     // Associated type for try from.
     type Error = SeqError;
@@ -47,7 +57,7 @@ impl TryFrom<char> for DNA {
     /// let base: DNA = DNA::try_from('a').unwrap();
     /// assert_eq!(base, DNA::A);
     /// ```
-    fn try_from(base: char) -> Result<Self, Self::Error> {
+    fn try_from(base: &char) -> Result<Self, Self::Error> {
         match base.to_ascii_uppercase() {
             'A' => Ok(DNA::A),
             'T' => Ok(DNA::T),
@@ -69,45 +79,9 @@ impl TryFrom<char> for DNA {
     }
 }
 
-impl From<DNA> for char {
-
-    /// Convert DNA to char representation.
-    ///
-    /// # Examples:
-    ///
-    /// ```
-    /// use seqrs::alphabets::DNA;
-    /// use std::convert::{From, Into};
-    ///
-    /// assert_eq!(char::from(DNA::A), 'A');
-    ///
-    /// // Into is also implicitly defined.
-    /// let base: char = DNA::A.into();
-    /// assert_eq!(base, 'A');
-    /// ```
-    fn from(base: DNA) -> Self {
-        match base {
-            DNA::A => 'A',
-            DNA::T => 'T',
-            DNA::G => 'G',
-            DNA::C => 'C',
-            DNA::R => 'R',
-            DNA::Y => 'Y',
-            DNA::S => 'S',
-            DNA::W => 'W',
-            DNA::K => 'K',
-            DNA::M => 'M',
-            DNA::B => 'B',
-            DNA::D => 'D',
-            DNA::H => 'H',
-            DNA::V => 'V',
-            DNA::N => 'N',
-        }
-    }
-}
 
 /// Use try from because it's possible to receive invalid input.
-impl TryFrom<u8> for DNA {
+impl TryFrom<&u8> for DNA {
 
     // Associated type for try from.
     type Error = SeqError;
@@ -127,8 +101,29 @@ impl TryFrom<u8> for DNA {
     /// let base: DNA = DNA::try_from(b'a').unwrap();
     /// assert_eq!(base, DNA::A);
     /// ```
-    fn try_from(base: u8) -> Result<Self, Self::Error> {
-        Self::try_from(base as char)
+    fn try_from(base: &u8) -> Result<Self, Self::Error> {
+        Self::try_from(&(*base as char))
+    }
+}
+
+impl From<DNA> for char {
+
+    /// Convert DNA to char representation.
+    ///
+    /// # Examples:
+    ///
+    /// ```
+    /// use seqrs::alphabets::DNA;
+    /// use std::convert::{From, Into};
+    ///
+    /// assert_eq!(char::from(DNA::A), 'A');
+    ///
+    /// // Into is also implicitly defined.
+    /// let base: char = DNA::A.into();
+    /// assert_eq!(base, 'A');
+    /// ```
+    fn from(base: DNA) -> Self {
+        u8::from(base) as char
     }
 }
 
@@ -149,9 +144,23 @@ impl From<DNA> for u8 {
     /// assert_eq!(base, b'A');
     /// ```
     fn from(base: DNA) -> Self {
-        // Casting char -> u32 -> u8 is safe in this instance because we
-        // control what `char`s it could be.
-        (char::from(base) as u32) as u8
+        match base {
+            DNA::A => b'A',
+            DNA::T => b'T',
+            DNA::G => b'G',
+            DNA::C => b'C',
+            DNA::R => b'R',
+            DNA::Y => b'Y',
+            DNA::S => b'S',
+            DNA::W => b'W',
+            DNA::K => b'K',
+            DNA::M => b'M',
+            DNA::B => b'B',
+            DNA::D => b'D',
+            DNA::H => b'H',
+            DNA::V => b'V',
+            DNA::N => b'N',
+        }
     }
 }
 
@@ -279,9 +288,12 @@ mod tests {
         assert_eq!(DNA::try_from('A').unwrap(), DNA::A);
         assert_eq!(DNA::try_from('a').unwrap(), DNA::A);
         assert_eq!(DNA::try_from('T').unwrap(), DNA::T);
-        assert_eq!(DNA::try_from('c').unwrap(), DNA::C);
-        assert_eq!(DNA::try_from('G').unwrap(), DNA::G);
-        assert_eq!(DNA::try_from('w').unwrap(), DNA::W);
+        assert_eq!(DNA::try_from(&'A').unwrap(), DNA::A);
+        assert_eq!(DNA::try_from(&'a').unwrap(), DNA::A);
+        assert_eq!(DNA::try_from(&'T').unwrap(), DNA::T);
+        assert_eq!(DNA::try_from(&'c').unwrap(), DNA::C);
+        assert_eq!(DNA::try_from(&'G').unwrap(), DNA::G);
+        assert_eq!(DNA::try_from(&'w').unwrap(), DNA::W);
     }
 
     #[test]

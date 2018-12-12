@@ -359,8 +359,14 @@ impl<T> Default for Gapped<T> {
     fn default() -> Gapped<T> { Gapped::Gap }
 }
 
+impl<T> From<&Gapped<T>> for Gapped<T> {
+    fn from(base: &Self) -> Self {
+        *base
+    }
+}
 
-impl<T: TryFrom<char>> TryFrom<char> for Gapped<T> {
+
+impl<'a, T: TryFrom<&'a char>> TryFrom<&'a char> for Gapped<T> {
     type Error = T::Error;
 
     /// Parse a character as a gap, and pass non-gap to wrapped type.
@@ -381,10 +387,10 @@ impl<T: TryFrom<char>> TryFrom<char> for Gapped<T> {
     /// let base = Gapped<DNA>::try_from('-').unwrap();
     /// assert_eq!(base, Gapped::Gap);
     /// ```
-    fn try_from(base: char) -> Result<Self, Self::Error> {
+    fn try_from(base: &char) -> Result<Self, Self::Error> {
         match base {
             '-' => Ok(Gapped::Gap),
-            a   => T::try_from(a).map(Gapped::Base),
+            &a   => T::try_from(&a).map(Gapped::Base),
         }
     }
 }
@@ -418,7 +424,7 @@ impl<T: Into<char>> From<Gapped<T>> for char {
     }
 }
 
-impl<T: TryFrom<u8>> TryFrom<u8> for Gapped<T> {
+impl<'a, T: TryFrom<&'a u8>> TryFrom<&'a u8> for Gapped<T> {
     type Error = T::Error;
 
     /// Parse a byte as a gap, and pass non-gap to wrapped type.
@@ -439,10 +445,10 @@ impl<T: TryFrom<u8>> TryFrom<u8> for Gapped<T> {
     /// let base = Gapped<DNA>::try_from(b'-').unwrap();
     /// assert_eq!(base, Gapped::Gap);
     /// ```
-    fn try_from(base: u8) -> Result<Self, Self::Error> {
+    fn try_from(base: &u8) -> Result<Self, Self::Error> {
         match base {
             b'-' => Ok(Gapped::Gap),
-            a    => T::try_from(a).map(Gapped::Base),
+            &a    => T::try_from(&a).map(Gapped::Base),
         }
     }
 }

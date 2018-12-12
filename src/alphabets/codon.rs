@@ -90,34 +90,6 @@ impl<T: Default> Default for Codon<T> {
     }
 }
 
-impl<T: TryFrom<char>> TryFrom<[char; 3]> for Codon<T> {
-    type Error = T::Error;
-
-    /// Parse a 3 member array as a Codon.
-    ///
-    /// # Examples:
-    /// 
-    /// WARNING: try_from is currently unstable, so this example cannot be
-    /// tested.
-    ///
-    /// ```rust,ignore
-    /// use seqrs::alphabets::DNA;
-    /// use seqrs::alphabets::Codon;
-    /// use std::convert::{TryFrom, TryInto};
-    ///
-    /// let codon = Codon<DNA>::try_from(['a', 'a', 'a']).unwrap();
-    /// assert_eq!(codon, Codon(DNA::A, DNA::A, DNA::A));
-    /// ```
-    fn try_from(bases: [char; 3]) -> Result<Self, Self::Error> {
-        let one   = T::try_from(bases[0])?;
-        let two   = T::try_from(bases[1])?;
-        let three = T::try_from(bases[2])?;
-        Ok(Codon(one, two, three))
-    }
-}
-
-
-
 impl Translate<AminoAcid> for Codon<DNA> {
     fn translate(&self) -> AminoAcid {
         match self {
@@ -215,11 +187,14 @@ mod tests {
 
     #[test]
     fn test_try_from() {
-        let codon = Codon::<DNA>::try_from(['a', 'a', 'a']).unwrap();
+        let codon = Codon::<DNA>::try_from_iter(['a', 'a', 'a'].iter()).unwrap();
         assert_eq!(codon, Codon(DNA::A, DNA::A, DNA::A));
 
-        let codon = Codon::<DNA>::try_from_iter("aaa".chars()).unwrap();
+        let b = "aaa";
+        let codon = Codon::<DNA>::try_from_iter(b.chars()).unwrap();
         assert_eq!(codon, Codon(DNA::A, DNA::A, DNA::A));
+
+        println!("{}", b);
 
         let codon = Codon::<DNA>::try_from_iter([DNA::A, DNA::A, DNA::A].iter()).unwrap();
         assert_eq!(codon, Codon(DNA::A, DNA::A, DNA::A));
