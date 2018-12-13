@@ -7,15 +7,16 @@ use alphabets::Complement;
 use std::convert::{TryFrom, TryInto};
 
 #[macro_export]
-macro_rules! alphabet {
+macro_rules! nucl_alphabet {
     (
         enum $name:ident {
-            $( $variant:ident => {char: $c:expr, str: $s:expr, compl: $compl:ident}; )+
+            $( $variant:ident => {bits: $b:expr, byte: $c:expr, compl: $compl:ident}; )+
         }
     ) => {
+        #[repr(u8)]
         #[derive(Debug, Hash, Copy, Clone)]
         pub enum $name {
-            $($variant),*
+            $($variant = $b),*
         }
 
         impl TryFrom<char> for $name {
@@ -58,12 +59,12 @@ macro_rules! alphabet {
     }
 }
 
-alphabet!{
+nucl_alphabet!{
     enum DNAnr {
-        A => {char: 'A', str: "A", compl: T};
-        T => {char: 'T', str: "T", compl: A};
-        G => {char: 'G', str: "G", compl: C};
-        C => {char: 'C', str: "C", compl: G};
+        A => {bits: 0b00, byte: 'A', compl: T};
+        T => {bits: 0b01, byte: 'T', compl: A};
+        G => {bits: 0b10, byte: 'G', compl: C};
+        C => {bits: 0b11, byte: 'C', compl: G};
     }
 }
 
