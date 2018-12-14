@@ -9,3 +9,4 @@ pub mod errors;
 pub mod alphabets;
 pub mod charcase;
 pub mod seq;
+pub mod convert;
