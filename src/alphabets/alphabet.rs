@@ -19,18 +19,70 @@ fn char_to_byte(c: &char) -> Result<u8, SeqError> {
 }
 
 #[macro_export]
-macro_rules! nucl_alphabet {
+macro_rules! alphabet {
     (
-        enum $name:ident {
-            $( $variant:ident = {bits: $bits:expr, byte: $byte:expr, compl: $compl:ident, redundant: [$($red:ident),*]}; )+
+        $(#[$($flag:tt)*])*
+        enum $name:ident {$($tail:tt)*}
+    ) => {
+        alphabet!{ $(#[$($flag)*])* () enum $name {$($tail)*} }
+    };
+
+    (
+        $(#[$($flag:tt)*])*
+        pub enum $name:ident {$($tail:tt)*}
+    ) => {
+        alphabet!{ $(#[$($flag)*])* (pub) enum $name {$($tail)*} }
+    };
+
+    (@trait $name:ident { $($variant:ident = {};)* }) => {};
+
+    (
+        @trait $name:ident {
+            $($variant:ident = {redundant: [$($red:ident),*] $(, $($tail:tt)* )? };)*
         }
     ) => {
-        #[repr(u8)]
-        #[derive(Debug, Hash, Copy, Clone)]
-        pub enum $name {
-            $($variant = $bits),*
+        pub fn redundant(l: &$name, r: &$name) -> bool{
+            match (l, r) {
+                $(
+                    ($name::$variant, $name::$variant) => true,
+                    $(
+                        ($name::$variant, $name::$red) => true,
+                    )*
+                )*
+                _ => false
+            }
         }
 
+        alphabet!{
+            @trait $name {
+                $($variant = {$($($tail)*)*};)*
+            }
+        }
+    };
+
+    (
+        @trait $name:ident {
+            $($variant:ident = {compl: $compl:ident $(, $($tail:tt)* )? };)*
+        }
+    ) => {
+        pub fn complement(c: $name) -> $name {
+            match c {
+                $($name::$variant => $name::$compl,)*
+            }
+        }
+
+        alphabet!{
+            @trait $name {
+                $($variant = {$($($tail)*)*};)*
+            }
+        }
+    };
+
+    (
+        @trait $name:ident {
+            $($variant:ident = {chr: $byte:expr $(, $($tail:tt)* )?});* $(;)?
+        }
+    ) => {
         impl TryFrom<&u8> for $name {
             type Error = SeqError;
 
@@ -92,42 +144,40 @@ macro_rules! nucl_alphabet {
             }
         }
 
-        impl PartialEq for $name {
-            fn eq(&self, other: &Self) -> bool {
-                match (self, other) {
-                    $(
-                        ($name::$variant, $name::$variant) => true,
-                        $(
-                            ($name::$variant, $name::$red) => true,
-                        )*
-                    )*
-                    _ => false
-                }
+        alphabet!{
+            @trait $name {
+                $($variant = {$($($tail)*)*};)*
             }
         }
+    };
 
-        impl Eq for $name {}
+    (
+        $(#[$($flag:tt)*])*
+        ($($vis:tt)?) enum $name:ident {
+            $($variant:ident $(= {$($tail:tt)*})? );* $(;)?
+        }
+    ) => {
+        $(#[$($flag)*])*
+        $($vis)* enum $name { $($variant),* }
 
-        impl PartialOrd for $name {
-            fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-                Some(self.cmp(other))
+        alphabet!{
+            @trait $name {
+                $($variant = {$($($tail)*)*};)*
             }
         }
-        impl Ord for $name {
-            fn cmp(&self, other: &Self) -> Ordering {
-                (*self as u8).cmp(&(*other as u8))
-            }
-        }
+    };
 
-        impl Complement for $name {
-            fn complement(&self) -> Self {
-                match self {
-                    $(
-                        $name::$variant => $name::$compl,
-                    )*
-                }
-            }
-        }
+}
+
+alphabet! {
+    #[repr(u8)]
+    #[derive(Debug)]
+    pub enum DNA {
+        A = {compl: T, chr: b'A', redundant: [N]};
+        T = {compl: A, chr: b'T', redundant: [N]};
+        G = {compl: C, chr: b'G', redundant: [N]};
+        C = {compl: G, chr: b'C', redundant: [N]};
+        N = {compl: N, chr: b'N', redundant: [A, T, G, C]};
     }
 }
 
