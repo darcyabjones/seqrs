@@ -7,6 +7,6 @@ extern crate failure;
 
 pub mod errors;
 pub mod alphabets;
-pub mod charcase;
-pub mod seq;
-pub mod convert;
+mod traits;
+
+pub use traits::{Match, RedundantAlphabet, Complement};

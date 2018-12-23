@@ -3,12 +3,9 @@
 ///
 
 use errors::SeqError;
-use alphabets::Complement;
-use std::cmp::Ordering;
-use std::convert::{TryFrom, TryInto};
 
 /// Safely casts char as byte, raising AlphabetReadError if overflow.
-fn char_to_byte(c: &char) -> Result<u8, SeqError> {
+pub fn char_to_byte(c: &char) -> Result<u8, SeqError> {
     let int = *c as u32;
 
     if int <= (u8::max_value() as u32) {
@@ -18,69 +15,162 @@ fn char_to_byte(c: &char) -> Result<u8, SeqError> {
     }
 }
 
+
+/// Creates a single letter biological alphabet.
+///
 #[macro_export]
 macro_rules! alphabet {
-    (
+    (   // Entry point handles non-public enum case.
         $(#[$($flag:tt)*])*
-        enum $name:ident {$($tail:tt)*}
-    ) => {
-        alphabet!{ $(#[$($flag)*])* () enum $name {$($tail)*} }
-    };
-
-    (
-        $(#[$($flag:tt)*])*
-        pub enum $name:ident {$($tail:tt)*}
-    ) => {
-        alphabet!{ $(#[$($flag)*])* (pub) enum $name {$($tail)*} }
-    };
-
-    (@trait $name:ident { $($variant:ident = {};)* }) => {};
-
-    (
-        @trait $name:ident {
-            $($variant:ident = {redundant: [$($red:ident),*] $(, $($tail:tt)* )? };)*
+        enum $name:ident {
+            $($variant:ident $(= {$($tail:tt)*})* );* $(;)*
         }
     ) => {
-        pub fn redundant(l: &$name, r: &$name) -> bool{
-            match (l, r) {
-                $(
-                    ($name::$variant, $name::$variant) => true,
+        alphabet!{
+            $(#[$($flag)*])*
+            ()
+            @alph $name {
+                $($variant: () = {$($($tail)*)*};)*
+            }
+        }
+    };
+    (   // Entry point handles public enum case.
+        $(#[$($flag:tt)*])*
+        pub enum $name:ident {
+            $($variant:ident $(= {$($tail:tt)*})* );* $(;)*
+        }
+    ) => {
+        alphabet!{
+            $(#[$($flag)*])*
+            (pub)
+            @alph $name {
+                $($variant: () = {$($($tail)*)*};)*
+            }
+        }
+    };
+    (   // Stop condition.
+        // If there are no fields in the brackets, create the enum.
+        // Optionally with bits as explicit enum variants.
+        $(#[$($flag:tt)*])*
+        ($($vis:tt)*)
+        @alph $name:ident {
+            $($variant:ident : ($($bits:expr)*) = {};)*
+        }
+    ) => {
+        $(#[$($flag)*])*
+        $($vis)* enum $name { $($variant $(= $bits)*),* }
+
+        // Also impl some methods.
+        impl $name {
+            // Vec containing all of the enum variants.
+            pub fn variants() -> Vec<Self> {
+                vec![$($name::$variant),*]
+            }
+
+            // The number of different variants.
+            pub fn cardinality() -> usize {
+                Self::variants().len()
+            }
+        }
+    };
+    (
+        // Move bits from record field to after enum variant.
+        // This helps us keep it around to the end and handling cases where
+        // it's not included.
+        // Can get rid of requirement for trailing commas by using
+        // $(, $($tail:tt)* )? when ? becomes available.
+        $(#[$($flag:tt)*])*
+        ($($vis:tt)*)
+        @alph $name:ident {
+            $($variant:ident : () = {
+                bits: $bits:expr,
+                $($tail:tt)*
+            };)*
+        }
+    ) => {
+        alphabet!{
+            $(#[$($flag)*])*
+            ($($vis)*)
+            @alph $name {
+                $($variant: ($bits) = {$($tail)*};)*
+            }
+        }
+    };
+    (
+        // Implement match to handle redundancy.
+        // Can get rid of requirement for trailing commas by using
+        // $(, $($tail:tt)* )? when ? becomes available.
+        $(#[$($flag:tt)*])*
+        ($($vis:tt)*)
+        @alph $name:ident {
+            $($variant:ident : ($($bits:expr)*) = {
+                redundant: [$($red:ident),*],
+                $($tail:tt)*
+            };)*
+        }
+    ) => {
+        impl Match<$name> for $name {
+            fn matches(&self, other: &$name) -> bool {
+                match (self, other) {
                     $(
-                        ($name::$variant, $name::$red) => true,
+                        ($name::$variant, $name::$variant) => true,
+                        $(
+                            ($name::$variant, $name::$red) => true,
+                        )*
                     )*
-                )*
-                _ => false
+                    _ => false
+                }
             }
         }
 
         alphabet!{
-            @trait $name {
-                $($variant = {$($($tail)*)*};)*
+            $(#[$($flag)*])*
+            ($($vis)*)
+            @alph $name {
+                $($variant: ($($bits)*) = {$($tail)*};)*
             }
         }
     };
-
     (
-        @trait $name:ident {
-            $($variant:ident = {compl: $compl:ident $(, $($tail:tt)* )? };)*
+        // Implement the Complement trait for the alphabet.
+        // Can get rid of requirement for trailing commas by using
+        // $(, $($tail:tt)* )? when ? becomes available.
+        $(#[$($flag:tt)*])*
+        ($($vis:tt)*)
+        @alph $name:ident {
+            $($variant:ident : ($($bits:expr)*) = {
+                compl: $compl:ident,
+                $($tail:tt)*
+            };)*
         }
     ) => {
-        pub fn complement(c: $name) -> $name {
-            match c {
-                $($name::$variant => $name::$compl,)*
+        impl Complement for $name {
+            fn complement(&self) -> Self {
+                match &self {
+                    $($name::$variant => $name::$compl,)*
+                }
             }
         }
 
         alphabet!{
-            @trait $name {
-                $($variant = {$($($tail)*)*};)*
+            $(#[$($flag)*])*
+            ($($vis)*)
+            @alph $name {
+                $($variant: ($($bits)*) = {$($tail)*};)*
             }
         }
     };
-
     (
-        @trait $name:ident {
-            $($variant:ident = {chr: $byte:expr $(, $($tail:tt)* )?});* $(;)?
+        // Implement conversion traits to and from characters.
+        // Can get rid of requirement for trailing commas by using
+        // $(, $($tail:tt)* )? when ? becomes available.
+        $(#[$($flag:tt)*])*
+        ($($vis:tt)*)
+        @alph $name:ident {
+            $($variant:ident : ($($bits:expr)*) = {
+                chr: $byte:expr,
+                $($tail:tt)*
+            };)*
         }
     ) => {
         impl TryFrom<&u8> for $name {
@@ -145,102 +235,82 @@ macro_rules! alphabet {
         }
 
         alphabet!{
-            @trait $name {
-                $($variant = {$($($tail)*)*};)*
+            $(#[$($flag)*])*
+            ($($vis)*)
+            @alph $name {
+                $($variant : ($($bits)*) = {$($tail)*};)*
             }
         }
     };
-
     (
+        // If we get an unsupported field in the variant structs, fail.
         $(#[$($flag:tt)*])*
-        ($($vis:tt)?) enum $name:ident {
-            $($variant:ident $(= {$($tail:tt)*})? );* $(;)?
+        ($($vis:tt)*)
+        @alph $name:ident {
+            $($variant:ident : ($($bits:expr)*) = {
+                $($unk:tt)+
+            };)*
         }
     ) => {
-        $(#[$($flag)*])*
-        $($vis)* enum $name { $($variant),* }
-
-        alphabet!{
-            @trait $name {
-                $($variant = {$($($tail)*)*};)*
-            }
-        }
+        compile_error!("Encountered unsupported field in `alphabet!` enum variants.");
     };
-
 }
 
-alphabet! {
-    #[repr(u8)]
-    #[derive(Debug)]
-    pub enum DNA {
-        A = {compl: T, chr: b'A', redundant: [N]};
-        T = {compl: A, chr: b'T', redundant: [N]};
-        G = {compl: C, chr: b'G', redundant: [N]};
-        C = {compl: G, chr: b'C', redundant: [N]};
-        N = {compl: N, chr: b'N', redundant: [A, T, G, C]};
-    }
-}
-
-nucl_alphabet!{
-    enum DNAnr {
-        A = {bits: 0b00, byte: b'A', compl: T, redundant: []};
-        T = {bits: 0b01, byte: b'T', compl: A, redundant: []};
-        G = {bits: 0b10, byte: b'G', compl: C, redundant: []};
-        C = {bits: 0b11, byte: b'C', compl: G, redundant: []};
-    }
-}
-
-nucl_alphabet!{
-    enum DNA {
-        A = {bits: 0b0001, byte: b'A', compl: T, redundant: [M, R, V, W, H, D, N]};
-        C = {bits: 0b0010, byte: b'C', compl: G, redundant: [M, S, V, Y, H, B, N]};
-        M = {bits: 0b0011, byte: b'M', compl: K, redundant: [A, C, R, S, V, W, Y, H, D, B, N]};
-        G = {bits: 0b0100, byte: b'G', compl: C, redundant: [R, S, V, K, D, B, N]};
-        R = {bits: 0b0101, byte: b'R', compl: Y, redundant: [A, M, G, S, V, W, H, K, D, B, N]};
-        S = {bits: 0b0110, byte: b'S', compl: S, redundant: [C, M, G, R, V, Y, H, K, D, B, N]};
-        V = {bits: 0b0111, byte: b'V', compl: B, redundant: [A, C, M, G, R, S, W, Y, H, K, D, B, N]};
-        T = {bits: 0b1000, byte: b'T', compl: A, redundant: [W, Y, H, K, D, B, N]};
-        W = {bits: 0b1001, byte: b'W', compl: W, redundant: [A, M, R, V, T, Y, H, K, D, B, N]};
-        Y = {bits: 0b1010, byte: b'Y', compl: R, redundant: [C, M, S, V, T, W, H, K, D, B, N]};
-        H = {bits: 0b1011, byte: b'H', compl: D, redundant: [A, C, M, R, S, V, T, W, Y, K, D, B, N]};
-        K = {bits: 0b1100, byte: b'K', compl: M, redundant: [G, R, S, V, T, W, Y, H, D, B, N]};
-        D = {bits: 0b1101, byte: b'D', compl: H, redundant: [A, M, G, R, S, V, T, W, Y, H, K, B, N]};
-        B = {bits: 0b1110, byte: b'B', compl: V, redundant: [C, M, G, R, S, V, T, W, Y, H, K, D, N]};
-        N = {bits: 0b1111, byte: b'N', compl: N, redundant: [A, C, M, G, R, S, V, T, W, Y, H, K, D, B]};
-    }
-}
 
 #[cfg(test)]
 mod tests {
-    #[macro_use]
     use super::*;
+    use ::Match;
+    use ::Complement;
+    use std::convert::TryFrom;
+
+    alphabet! {
+        #[repr(u8)]
+        #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Copy, Clone)]
+        pub enum DNA {
+            A = {chr: b'A', compl: T, redundant: [N],};
+            T = {chr: b'T', compl: A, redundant: [N],};
+            G = {chr: b'G', compl: C, redundant: [N],};
+            C = {chr: b'C', compl: G, redundant: [N],};
+            N = {chr: b'N', compl: N, redundant: [A, T, G, C],};
+        }
+    }
+
+
+    #[test]
+    fn test_match() {
+        assert!(DNA::A.matches(&DNA::N));
+        assert!(DNA::A.matches(&DNA::A));
+        assert!(!DNA::A.matches(&DNA::C));
+        assert!(DNA::A.doesnt_match(&DNA::C));
+    }
 
     #[test]
     fn test_from() {
-        assert_eq!(DNAnr::try_from(  'A').unwrap(), DNAnr::A);
-        assert_eq!(DNAnr::try_from( &'A').unwrap(), DNAnr::A);
-        assert_eq!(DNAnr::try_from( b'A').unwrap(), DNAnr::A);
-        assert_eq!(DNAnr::try_from(&b'A').unwrap(), DNAnr::A);
+        assert_eq!(DNA::try_from(  'A').unwrap(), DNA::A);
+        assert_eq!(DNA::try_from( &'A').unwrap(), DNA::A);
+        assert_eq!(DNA::try_from( b'A').unwrap(), DNA::A);
+        assert_eq!(DNA::try_from(&b'A').unwrap(), DNA::A);
 
-        assert_eq!(DNAnr::try_from( 'a').unwrap(), DNAnr::A);
-        assert_eq!(DNAnr::try_from( 'T').unwrap(), DNAnr::T);
-        assert_eq!(DNAnr::try_from(&'A').unwrap(), DNAnr::A);
-        assert_eq!(DNAnr::try_from(&'a').unwrap(), DNAnr::A);
-        assert_eq!(DNAnr::try_from(&'T').unwrap(), DNAnr::T);
-        assert_eq!(DNAnr::try_from(&'c').unwrap(), DNAnr::C);
-        assert_eq!(DNAnr::try_from(&'G').unwrap(), DNAnr::G);
+        assert_eq!(DNA::try_from( 'a').unwrap(), DNA::A);
+        assert_eq!(DNA::try_from( 'T').unwrap(), DNA::T);
+        assert_eq!(DNA::try_from(&'A').unwrap(), DNA::A);
+        assert_eq!(DNA::try_from(&'a').unwrap(), DNA::A);
+        assert_eq!(DNA::try_from(&'T').unwrap(), DNA::T);
+        assert_eq!(DNA::try_from(&'c').unwrap(), DNA::C);
+        assert_eq!(DNA::try_from(&'G').unwrap(), DNA::G);
 
-        assert_eq!(  u8::from( DNAnr::A), b'A');
-        assert_eq!(  u8::from(&DNAnr::A), b'A');
-        assert_eq!(char::from( DNAnr::A),  'A');
-        assert_eq!(char::from(&DNAnr::A),  'A');
+        assert_eq!(  u8::from( DNA::A), b'A');
+        assert_eq!(  u8::from(&DNA::A), b'A');
+        assert_eq!(char::from( DNA::A),  'A');
+        assert_eq!(char::from(&DNA::A),  'A');
     }
 
     #[test]
     fn test_eq() {
-        assert_eq!(DNAnr::A, DNAnr::A);
-        assert_eq!(DNAnr::T, DNAnr::T);
-        assert_eq!(DNAnr::G, DNAnr::G);
-        assert_eq!(DNAnr::C, DNAnr::C);
+        assert_eq!(DNA::A, DNA::A);
+        assert_eq!(DNA::T, DNA::T);
+        assert_eq!(DNA::G, DNA::G);
+        assert_eq!(DNA::C, DNA::C);
     }
 }
