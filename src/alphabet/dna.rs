@@ -1,8 +1,5 @@
-//! Definitions for the DNA alphabet
-
 use errors::SeqError;
 use ::{Complement, Match};
-use ::alphabets::alphabet::char_to_byte;
 
 use std::convert::TryFrom;
 
@@ -13,92 +10,107 @@ alphabet! {
         A = {
             bits: 0b0001,
             chr: b'A',
+            name: "Alanine",
             compl: T,
-            redundant: [M, R, V, W, H, D, N],
+            matches: [M, R, V, W, H, D, N],
         };
         C = {
             bits: 0b0010,
             chr: b'C',
+            name: "Cytosine",
             compl: G,
-            redundant: [M, S, V, Y, H, B, N],
+            matches: [M, S, V, Y, H, B, N],
         };
         M = {
             bits: 0b0011,
             chr: b'M',
+            name: "Alanine or Cytosine",
             compl: K,
-            redundant: [A, C, R, S, V, W, Y, H, D, B, N],
+            matches: [A, C, R, S, V, W, Y, H, D, B, N],
         };
         G = {
             bits: 0b0100,
             chr: b'G',
+            name: "Guanine",
             compl: C,
-            redundant: [R, S, V, K, D, B, N],
+            matches: [R, S, V, K, D, B, N],
         };
         R = {
             bits: 0b0101,
             chr: b'R',
+            name: "Alanine or Guanine",
             compl: Y,
-            redundant: [A, M, G, S, V, W, H, K, D, B, N],
+            matches: [A, M, G, S, V, W, H, K, D, B, N],
         };
         S = {
             bits: 0b0110,
             chr: b'S',
+            name: "Cytosine or Guanine",
             compl: S,
-            redundant: [C, M, G, R, V, Y, H, K, D, B, N],
+            matches: [C, M, G, R, V, Y, H, K, D, B, N],
         };
         V = {
             bits: 0b0111,
             chr: b'V',
+            name: "Alanine, Cytosine, or Guanine",
             compl: B,
-            redundant: [A, C, M, G, R, S, W, Y, H, K, D, B, N],
+            matches: [A, C, M, G, R, S, W, Y, H, K, D, B, N],
         };
         T = {
             bits: 0b1000,
             chr: b'T',
+            name: "Thymine",
             compl: A,
-            redundant: [W, Y, H, K, D, B, N],
+            matches: [W, Y, H, K, D, B, N],
         };
         W = {
             bits: 0b1001,
             chr: b'W',
+            name: "Alanine or Thymine",
             compl: W,
-            redundant: [A, M, R, V, T, Y, H, K, D, B, N],
+            matches: [A, M, R, V, T, Y, H, K, D, B, N],
         };
         Y = {
             bits: 0b1010,
             chr: b'Y',
+            name: "Cytosine or Alanine",
             compl: R,
-            redundant: [C, M, S, V, T, W, H, K, D, B, N],
+            matches: [C, M, S, V, T, W, H, K, D, B, N],
         };
         H = {
             bits: 0b1011,
             chr: b'H',
+            name: "Alanine, Cytosine, or Thymine",
             compl: D,
-            redundant: [A, C, M, R, S, V, T, W, Y, K, D, B, N],
+            matches: [A, C, M, R, S, V, T, W, Y, K, D, B, N],
         };
         K = {
             bits: 0b1100,
             chr: b'K',
+            name: "Guanine or Thymine",
             compl: M,
-            redundant: [G, R, S, V, T, W, Y, H, D, B, N],
+            matches: [G, R, S, V, T, W, Y, H, D, B, N],
         };
         D = {
             bits: 0b1101,
             chr: b'D',
+            name: "Alanine, Guanine, or Thymine",
             compl: H,
-            redundant: [A, M, G, R, S, V, T, W, Y, H, K, B, N],
+            matches: [A, M, G, R, S, V, T, W, Y, H, K, B, N],
         };
         B = {
             bits: 0b1110,
             chr: b'B',
+            name: "Cytosine, Guanine, or Thymine",
             compl: V,
-            redundant: [C, M, G, R, S, V, T, W, Y, H, K, D, N],
+            matches: [C, M, G, R, S, V, T, W, Y, H, K, D, N],
         };
         N = {
             bits: 0b1111,
             chr: b'N',
+            name: "Any nucleotide",
             compl: N,
-            redundant: [A, C, M, G, R, S, V, T, W, Y, H, K, D, B],
+            matches: [A, C, M, G, R, S, V, T, W, Y, H, K, D, B],
         };
     }
 }
@@ -109,6 +121,11 @@ impl Default for DNA {
     fn default() -> Self { DNA::N }
 }
 
+impl From<&DNA> for DNA {
+    fn from(d: &DNA) -> Self {
+        *d
+    }
+}
 
 #[cfg(test)]
 mod tests {

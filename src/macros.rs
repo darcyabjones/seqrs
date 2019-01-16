@@ -4,18 +4,6 @@
 
 use errors::SeqError;
 
-/// Safely casts char as byte, raising AlphabetReadError if overflow.
-pub fn char_to_byte(c: &char) -> Result<u8, SeqError> {
-    let int = *c as u32;
-
-    if int <= (u8::max_value() as u32) {
-        Ok(int as u8)
-    } else {
-        Err(SeqError::AlphabetReadError { base: *c })
-    }
-}
-
-
 /// Creates a single letter biological alphabet.
 ///
 #[macro_export]
@@ -97,6 +85,60 @@ macro_rules! alphabet {
         }
     };
     (
+        // is this a valid IUPAC character?
+        $(#[$($flag:tt)*])*
+        ($($vis:tt)*)
+        @alph $name:ident {
+            $($variant:ident : ($($bits:expr)*) = {
+                is_iupac: $isit:expr,
+                $($tail:tt)*
+            };)*
+        }
+    ) => {
+        impl $name {
+            pub fn is_iupac(&self) -> bool {
+                match &self {
+                    $($name::$variant => $isit,)*
+                }
+            }
+        }
+
+        alphabet!{
+            $(#[$($flag)*])*
+            ($($vis)*)
+            @alph $name {
+                $($variant: ($($bits)*) = {$($tail)*};)*
+            }
+        }
+    };
+    (
+        // More descriptive name
+        $(#[$($flag:tt)*])*
+        ($($vis:tt)*)
+        @alph $name:ident {
+            $($variant:ident : ($($bits:expr)*) = {
+                name: $basename:expr,
+                $($tail:tt)*
+            };)*
+        }
+    ) => {
+        impl $name {
+            pub fn name(&self) -> String {
+                match &self {
+                    $($name::$variant => String::from($basename),)*
+                }
+            }
+        }
+
+        alphabet!{
+            $(#[$($flag)*])*
+            ($($vis)*)
+            @alph $name {
+                $($variant: ($($bits)*) = {$($tail)*};)*
+            }
+        }
+    };
+    (
         // Implement match to handle redundancy.
         // Can get rid of requirement for trailing commas by using
         // $(, $($tail:tt)* )? when ? becomes available.
@@ -104,14 +146,14 @@ macro_rules! alphabet {
         ($($vis:tt)*)
         @alph $name:ident {
             $($variant:ident : ($($bits:expr)*) = {
-                redundant: [$($red:ident),*],
+                matches: [$($red:ident),*],
                 $($tail:tt)*
             };)*
         }
     ) => {
         impl Match<$name> for $name {
             fn matches(&self, other: &$name) -> bool {
-                match (self, other) {
+                match (&self, &other) {
                     $(
                         ($name::$variant, $name::$variant) => true,
                         $(
@@ -196,7 +238,7 @@ macro_rules! alphabet {
             type Error = SeqError;
 
             fn try_from(base: &char) -> Result<Self, Self::Error> {
-                char_to_byte(base).and_then(|b| Self::try_from(&b))
+                $crate::utils::char_to_byte(base).and_then(|b| Self::try_from(&b))
             }
         }
 
@@ -204,7 +246,7 @@ macro_rules! alphabet {
             type Error = SeqError;
 
             fn try_from(base: char) -> Result<Self, Self::Error> {
-                char_to_byte(&base).and_then(|b| Self::try_from(&b))
+                $crate::utils::char_to_byte(&base).and_then(|b| Self::try_from(&b))
             }
         }
 
@@ -257,6 +299,9 @@ macro_rules! alphabet {
 }
 
 
+
+
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -268,11 +313,11 @@ mod tests {
         #[repr(u8)]
         #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Copy, Clone)]
         pub enum DNA {
-            A = {chr: b'A', compl: T, redundant: [N],};
-            T = {chr: b'T', compl: A, redundant: [N],};
-            G = {chr: b'G', compl: C, redundant: [N],};
-            C = {chr: b'C', compl: G, redundant: [N],};
-            N = {chr: b'N', compl: N, redundant: [A, T, G, C],};
+            A = {chr: b'A', compl: T, matches: [N],};
+            T = {chr: b'T', compl: A, matches: [N],};
+            G = {chr: b'G', compl: C, matches: [N],};
+            C = {chr: b'C', compl: G, matches: [N],};
+            N = {chr: b'N', compl: N, matches: [A, T, G, C],};
         }
     }
 

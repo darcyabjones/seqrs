@@ -14,6 +14,8 @@ pub trait RedundantAlphabet: Sized {
     fn intersection(&self, other: &Self) -> Option<Self>;
 
     fn difference(&self, other: &Self) -> Option<Self>;
+
+    fn is_redundant(&self) -> bool;
 }
 
 pub trait Complement {

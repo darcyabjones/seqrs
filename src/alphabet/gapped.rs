@@ -6,8 +6,8 @@
 //! It is very similar to the Option<T> type, but with a few extra methods
 //! that were difficult to implement on top of option.
 
-use alphabets::Complement;
-use alphabets::Translate;
+use ::{Complement, Translate};
+
 use std::convert::TryFrom;
 
 
@@ -27,7 +27,7 @@ impl<T> Gapped<T> {
     /// # Examples:
     ///
     /// ```
-    /// use seqrs::alphabets::Gapped;
+    /// use seqrs::alphabet::Gapped;
     ///
     /// let x: Gapped<char> = Gapped::Base('a');
     /// assert_eq!(x.is_base(), true);
@@ -48,7 +48,7 @@ impl<T> Gapped<T> {
     /// # Examples:
     ///
     /// ```
-    /// use seqrs::alphabets::Gapped;
+    /// use seqrs::alphabet::Gapped;
     /// let x: Gapped<char> = Gapped::Base('a');
     /// assert_eq!(x.is_gap(), false);
     ///
@@ -76,7 +76,7 @@ impl<T> Gapped<T> {
     /// # Examples
     ///
     /// ```
-    /// use seqrs::alphabets::Gapped;
+    /// use seqrs::alphabet::Gapped;
     /// let base: Gapped<char> = Gapped::Base('a');
     /// // First, cast `Gapped<char>` to `Gapped<&char>` with `as_ref`,
     /// // then consume *that* with `map`, leaving `text` on the stack.
@@ -97,7 +97,7 @@ impl<T> Gapped<T> {
     /// # Examples
     ///
     /// ```
-    /// use seqrs::alphabets::Gapped;
+    /// use seqrs::alphabet::Gapped;
     ///
     /// let mut x = Gapped::Base('a');
     /// match x.as_mut() {
@@ -127,14 +127,14 @@ impl<T> Gapped<T> {
     /// # Examples
     ///
     /// ```
-    /// use seqrs::alphabets::Gapped;
+    /// use seqrs::alphabet::Gapped;
     ///
     /// let x: Gapped<char> = Gapped::Base('a');
     /// assert_eq!(x.expect("the world is ending"), 'a');
     /// ```
     ///
     /// ```{.should_panic}
-    /// use seqrs::alphabets::Gapped;
+    /// use seqrs::alphabet::Gapped;
     ///
     /// let x: Gapped<char> = Gapped::Gap;
     /// x.expect("the world is ending"); // panics with `the world is ending`
@@ -163,14 +163,14 @@ impl<T> Gapped<T> {
     /// # Examples
     ///
     /// ```
-    /// use seqrs::alphabets::Gapped;
+    /// use seqrs::alphabet::Gapped;
     ///
     /// let x: Gapped<char> = Gapped::Base('a');
     /// assert_eq!(x.unwrap(), 'a');
     /// ```
     ///
     /// ```{.should_panic}
-    /// use seqrs::alphabets::Gapped;
+    /// use seqrs::alphabet::Gapped;
     ///
     /// let x: Gapped<char> = Gapped::Gap;
     /// assert_eq!(x.unwrap(), 'a'); // fails
@@ -194,7 +194,7 @@ impl<T> Gapped<T> {
     /// # Examples
     ///
     /// ```
-    /// use seqrs::alphabets::Gapped;
+    /// use seqrs::alphabet::Gapped;
     ///
     /// assert_eq!(Gapped::Base('A').unwrap_or('T'), 'A');
     /// assert_eq!(Gapped::Gap.unwrap_or('T'), 'T');
@@ -212,7 +212,7 @@ impl<T> Gapped<T> {
     /// # Examples
     ///
     /// ```
-    /// use seqrs::alphabets::Gapped;
+    /// use seqrs::alphabet::Gapped;
     ///
     /// assert_eq!(Gapped::Base('A').unwrap_or_else(|| '-'), 'A');
     /// assert_eq!(Gapped::Gap.unwrap_or_else(|| '-'), '-');
@@ -230,7 +230,7 @@ impl<T> Gapped<T> {
     /// # Examples
     ///
     /// ```
-    /// use seqrs::alphabets::Gapped;
+    /// use seqrs::alphabet::Gapped;
     ///
     /// let base = Gapped::Base('a');
     /// let maybe_base = base.map(|s| s.to_ascii_uppercase());
@@ -250,7 +250,7 @@ impl<T> Gapped<T> {
     /// # Examples
     ///
     /// ```
-    /// use seqrs::alphabets::Gapped;
+    /// use seqrs::alphabet::Gapped;
     ///
     /// let base: Gapped<char> = Gapped::Base('A');
     /// assert_eq!(base.map_or('T', |v| v.to_ascii_lowercase()), 'a');
@@ -272,7 +272,7 @@ impl<T> Gapped<T> {
     /// # Examples
     ///
     /// ```
-    /// use seqrs::alphabets::Gapped;
+    /// use seqrs::alphabet::Gapped;
     ///
     /// let k = 21;
     ///
@@ -304,8 +304,8 @@ impl<T> Gapped<T> {
     /// # Examples
     ///
     /// ```
-    /// use seqrs::alphabets::Gapped;
-    /// use seqrs::alphabets::DNA;
+    /// use seqrs::alphabet::Gapped;
+    /// use seqrs::alphabet::DNA;
     ///
     /// let x = Gapped::Base(DNA::A);
     /// assert_eq!(x.ok_or(0), Ok(DNA::A));
@@ -333,8 +333,8 @@ impl<T> Gapped<T> {
     /// # Examples
     ///
     /// ```
-    /// use seqrs::alphabets::Gapped;
-    /// use seqrs::alphabets::DNA;
+    /// use seqrs::alphabet::Gapped;
+    /// use seqrs::alphabet::DNA;
     ///
     /// let x = Gapped::Base(DNA::A);
     /// assert_eq!(x.ok_or_else(|| 0), Ok(DNA::A));
@@ -352,19 +352,55 @@ impl<T> Gapped<T> {
 
 }
 
-
 impl<T> Default for Gapped<T> {
     /// Returns [`Gap`][Gapped::Gap].
     #[inline]
     fn default() -> Gapped<T> { Gapped::Gap }
 }
 
-impl<T> From<&Gapped<T>> for Gapped<T> {
-    fn from(base: &Self) -> Self {
-        *base
+
+impl<'a, T> TryFrom<&'a u8> for Gapped<T>
+    where T: TryFrom<&'a u8>
+{
+    type Error = T::Error;
+
+    /// Parse a byte as a gap, and pass non-gap to wrapped type.
+    ///
+    /// # Examples:
+    ///
+    /// WARNING: try_from is currently unstable, so this example cannot be
+    /// tested.
+    ///
+    /// ```rust,ignore
+    /// use seqrs::alphabet::DNA;
+    /// use seqrs::alphabet::Gapped;
+    /// use std::convert::{TryFrom, TryInto};
+    ///
+    /// let base = Gapped<DNA>::try_from(b'a').unwrap();
+    /// assert_eq!(base, Gapped::Base(DNA::A));
+    ///
+    /// let base = Gapped<DNA>::try_from(b'-').unwrap();
+    /// assert_eq!(base, Gapped::Gap);
+    /// ```
+    fn try_from(base: &'a u8) -> Result<Self, Self::Error> {
+        match base {
+            b'-' => Ok(Gapped::Gap),
+            a    => T::try_from(a).map(Gapped::Base),
+        }
     }
 }
 
+impl<T: TryFrom<u8>> TryFrom<u8> for Gapped<T> {
+    type Error = T::Error;
+
+    /// Parse an owned byte as a gap, and pass non-gap to wrapped type.
+    fn try_from(base: u8) -> Result<Self, Self::Error> {
+        match base {
+            b'-' => Ok(Gapped::Gap),
+            a    => T::try_from(a).map(Gapped::Base),
+        }
+    }
+}
 
 impl<'a, T: TryFrom<&'a char>> TryFrom<&'a char> for Gapped<T> {
     type Error = T::Error;
@@ -377,8 +413,8 @@ impl<'a, T: TryFrom<&'a char>> TryFrom<&'a char> for Gapped<T> {
     /// tested.
     ///
     /// ```rust,ignore
-    /// use seqrs::alphabets::DNA;
-    /// use seqrs::alphabets::Gapped;
+    /// use seqrs::alphabet::DNA;
+    /// use seqrs::alphabet::Gapped;
     /// use std::convert::{TryFrom, TryInto};
     ///
     /// let base = Gapped<DNA>::try_from('a').unwrap();
@@ -387,82 +423,35 @@ impl<'a, T: TryFrom<&'a char>> TryFrom<&'a char> for Gapped<T> {
     /// let base = Gapped<DNA>::try_from('-').unwrap();
     /// assert_eq!(base, Gapped::Gap);
     /// ```
-    fn try_from(base: &char) -> Result<Self, Self::Error> {
+    fn try_from(base: &'a char) -> Result<Self, Self::Error> {
         match base {
             '-' => Ok(Gapped::Gap),
-            &a   => T::try_from(&a).map(Gapped::Base),
+            a   => T::try_from(a).map(Gapped::Base),
         }
     }
 }
 
-
-impl<T: Into<char>> From<Gapped<T>> for char {
-
-    /// Convert gapped alphabet to char representation.
-    ///
-    /// # Examples:
-    ///
-    /// ```
-    /// use seqrs::alphabets::DNA;
-    /// use seqrs::alphabets::Gapped;
-    /// use std::convert::{From, Into};
-    ///
-    /// assert_eq!(char::from(Gapped::Base(DNA::A)), 'A');
-    ///
-    /// let gap: Gapped<DNA> = Gapped::Gap;
-    /// assert_eq!(char::from(gap), '-');
-    ///
-    /// // Into is also implicitly defined.
-    /// let base: char = Gapped::Base(DNA::A).into();
-    /// assert_eq!(base, 'A');
-    /// ```
-    fn from(base: Gapped<T>) -> Self {
-        match base {
-            Gapped::Base(x) => x.into(),
-            Gapped::Gap => '-',
-        }
-    }
-}
-
-impl<'a, T: TryFrom<&'a u8>> TryFrom<&'a u8> for Gapped<T> {
+impl<T: TryFrom<char>> TryFrom<char> for Gapped<T> {
     type Error = T::Error;
 
-    /// Parse a byte as a gap, and pass non-gap to wrapped type.
-    ///
-    /// # Examples:
-    ///
-    /// WARNING: try_from is currently unstable, so this example cannot be
-    /// tested.
-    ///
-    /// ```rust,ignore
-    /// use seqrs::alphabets::DNA;
-    /// use seqrs::alphabets::Gapped;
-    /// use std::convert::{TryFrom, TryInto};
-    ///
-    /// let base = Gapped<DNA>::try_from(b'a').unwrap();
-    /// assert_eq!(base, Gapped::Base(DNA::A));
-    ///
-    /// let base = Gapped<DNA>::try_from(b'-').unwrap();
-    /// assert_eq!(base, Gapped::Gap);
-    /// ```
-    fn try_from(base: &u8) -> Result<Self, Self::Error> {
+    /// Parse an owned byte as a gap, and pass non-gap to wrapped type.
+    fn try_from(base: char) -> Result<Self, Self::Error> {
         match base {
-            b'-' => Ok(Gapped::Gap),
-            &a    => T::try_from(&a).map(Gapped::Base),
+            '-' => Ok(Gapped::Gap),
+            a   => T::try_from(a).map(Gapped::Base),
         }
     }
 }
 
-
-impl<T: Into<u8>> From<Gapped<T>> for u8 {
+impl<T: Into<u8> + Copy> From<&Gapped<T>> for u8 {
 
     /// Convert gapped alphabet to byte representation.
     ///
     /// # Examples:
     ///
     /// ```
-    /// use seqrs::alphabets::DNA;
-    /// use seqrs::alphabets::Gapped;
+    /// use seqrs::alphabet::DNA;
+    /// use seqrs::alphabet::Gapped;
     /// use std::convert::{From, Into};
     ///
     /// assert_eq!(u8::from(Gapped::Base(DNA::A)), b'A');
@@ -474,6 +463,17 @@ impl<T: Into<u8>> From<Gapped<T>> for u8 {
     /// let base: u8 = Gapped::Base(DNA::A).into();
     /// assert_eq!(base, b'A');
     /// ```
+    fn from(base: &Gapped<T>) -> Self {
+        match base {
+            Gapped::Base(x) => (*x).into(),
+            Gapped::Gap     => b'-',
+        }
+    }
+}
+
+impl<T: Into<u8> + Copy> From<Gapped<T>> for u8 {
+
+    /// Convert gapped alphabet to byte representation.
     fn from(base: Gapped<T>) -> Self {
         match base {
             Gapped::Base(x) => x.into(),
@@ -482,14 +482,52 @@ impl<T: Into<u8>> From<Gapped<T>> for u8 {
     }
 }
 
+impl<T: Into<char> + Copy> From<&Gapped<T>> for char {
+
+    /// Convert gapped alphabet to char representation.
+    ///
+    /// # Examples:
+    ///
+    /// ```
+    /// use seqrs::alphabet::DNA;
+    /// use seqrs::alphabet::Gapped;
+    /// use std::convert::{From, Into};
+    ///
+    /// assert_eq!(char::from(&Gapped::Base(DNA::A)), 'A');
+    ///
+    /// let gap: Gapped<DNA> = Gapped::Gap;
+    /// assert_eq!(char::from(&gap), '-');
+    ///
+    /// // Into is also implicitly defined.
+    /// let base: char = (&Gapped::Base(DNA::A)).into();
+    /// assert_eq!(base, 'A');
+    /// ```
+    fn from(base: &Gapped<T>) -> Self {
+        match base {
+            Gapped::Base(x) => (*x).into(),
+            Gapped::Gap => '-',
+        }
+    }
+}
+
+impl<T: Into<char> + Copy> From<Gapped<T>> for char {
+
+    /// Convert gapped alphabet to char representation.
+    fn from(base: Gapped<T>) -> Self {
+        match base {
+            Gapped::Base(x) => x.into(),
+            Gapped::Gap => '-',
+        }
+    }
+}
+
+
+
 /// Complement is implemented for any wrapped type that also implements
 /// complement. A gap is always it's own complement.
 impl<T: Complement> Complement for Gapped<T> {
     fn complement(&self) -> Self {
-        match self {
-            Gapped::Gap    => Gapped::Gap,
-            Gapped::Base(a) => Gapped::Base(a.complement()),
-        }
+        self.as_ref().map(|a| a.complement())
     }
 }
 
@@ -498,13 +536,9 @@ impl<T: Complement> Complement for Gapped<T> {
 /// translate.
 impl<A, T: Translate<A>> Translate<Gapped<A>> for Gapped<T> {
     fn translate(&self) -> Gapped<A> {
-        match self {
-            Gapped::Gap => Gapped::Gap,
-            Gapped::Base(a) => Gapped::Base(a.translate()),
-        }
+        self.as_ref().map(|a| a.translate())
     }
 }
-
 
 
 #[cfg(test)]
@@ -514,16 +548,31 @@ mod tests {
     //! get rid of.
 
     use super::*;
-    use alphabets::DNA;
+    use alphabet::DNA;
 
     #[test]
     fn test_from() {
         assert_eq!(Gapped::<DNA>::try_from('-').unwrap(), Gapped::Gap);
         assert_eq!(Gapped::<DNA>::try_from('A').unwrap(), Gapped::Base(DNA::A));
         assert_eq!(Gapped::<DNA>::try_from('T').unwrap(), Gapped::Base(DNA::T));
+        assert_eq!(Gapped::<DNA>::try_from(&'-').unwrap(), Gapped::Gap);
+        assert_eq!(Gapped::<DNA>::try_from(&'A').unwrap(), Gapped::Base(DNA::A));
+        assert_eq!(Gapped::<DNA>::try_from(&'T').unwrap(), Gapped::Base(DNA::T));
 
         assert_eq!(Gapped::<DNA>::try_from(b'T').unwrap(), Gapped::Base(DNA::T));
         assert_eq!(Gapped::<DNA>::try_from(b'-').unwrap(), Gapped::Gap);
+        assert_eq!(Gapped::<DNA>::try_from(&b'T').unwrap(), Gapped::Base(DNA::T));
+        assert_eq!(Gapped::<DNA>::try_from(&b'-').unwrap(), Gapped::Gap);
+
+        assert_eq!(u8::from(Gapped::Base(DNA::T)), b'T');
+        assert_eq!(u8::from(Gapped::Gap::<DNA>), b'-');
+        assert_eq!(u8::from(&Gapped::Base(DNA::T)), b'T');
+        assert_eq!(u8::from(&Gapped::Gap::<DNA>), b'-');
+
+        assert_eq!(char::from(Gapped::Base(DNA::T)), 'T');
+        assert_eq!(char::from(Gapped::Gap::<DNA>), '-');
+        assert_eq!(char::from(&Gapped::Base(DNA::T)), 'T');
+        assert_eq!(char::from(&Gapped::Gap::<DNA>), '-');
     }
 
     #[test]
