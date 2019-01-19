@@ -345,13 +345,83 @@ impl RedundantAlphabet for AA {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use proptest::prelude::any;
+    use proptest::sample::select;
 
     #[test]
-    fn test_from() {
-        assert_eq!(AA::try_from('A').unwrap(),  AA::A);
-        assert_eq!(AA::try_from('C').unwrap(),  AA::C);
-        assert_eq!(AA::try_from('Z').unwrap(),  AA::Z);
-        assert_eq!(AA::try_from('G').unwrap(),  AA::G);
-        assert_eq!(AA::try_from(b'G').unwrap(), AA::G);
+    fn test_cardinality() {
+        assert_eq!(AA::cardinality(), 27);
+    }
+
+    proptest!{
+        // Basic parsing properties.
+        #[test]
+        fn test_from_u8_doesnt_crash(c in any::<u8>()) {
+            let _dummy = AA::try_from(c);
+        }
+
+        #[test]
+        fn test_from_char_doesnt_crash(c in any::<char>()) {
+            let _dummy = AA::try_from(c);
+        }
+
+        #[test]
+        fn test_to_u8_doesnt_crash(b in select(AA::variants())) {
+            let _dummy = u8::from(b);
+        }
+
+        #[test]
+        fn test_to_char_doesnt_crash(b in select(AA::variants())) {
+            let _dummy = char::from(b);
+        }
+
+        // converting from AA to u8 and back to AA should recover same aa.
+        #[test]
+        fn test_from_to_u8_recovers_original(b in select(AA::variants())) {
+            assert_eq!(AA::try_from(u8::from(b)).unwrap(), b);
+            assert_eq!(AA::try_from(&u8::from(b)).unwrap(), b);
+            assert_eq!(
+                AA::try_from(u8::from(b).to_ascii_lowercase()).unwrap(),
+                b
+            );
+            assert_eq!(
+                AA::try_from(&u8::from(b).to_ascii_lowercase()).unwrap(),
+                b
+            );
+        }
+
+        #[test]
+        fn test_from_to_char_recovers_original(b in select(AA::variants())) {
+            assert_eq!(AA::try_from(char::from(b)).unwrap(), b);
+            assert_eq!(AA::try_from(&char::from(b)).unwrap(), b);
+            assert_eq!(
+                AA::try_from(char::from(b).to_ascii_lowercase()).unwrap(),
+                b
+            );
+            assert_eq!(
+                AA::try_from(&char::from(b).to_ascii_lowercase()).unwrap(),
+                b
+            );
+        }
+
+        // Test some properties of the redundant set-like operations.
+        // Because we don't have every possible set permutation encoded in the
+        // AA definition, we can't test set operations properly.
+        #[test]
+        fn test_union_is_reciprocal(
+            base1 in select(AA::variants()),
+            base2 in select(AA::variants()),
+        ) {
+            assert_eq!(base1.union(&base2), base2.union(&base1));
+        }
+
+        #[test]
+        fn test_intersection_is_reciprocal(
+            base1 in select(AA::variants()),
+            base2 in select(AA::variants()),
+        ) {
+            assert_eq!(base1.intersection(&base2), base2.intersection(&base1));
+        }
+
     }
 }

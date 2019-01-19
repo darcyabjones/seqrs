@@ -276,6 +276,12 @@ macro_rules! alphabet {
             }
         }
 
+        impl std::fmt::Display for $name {
+            fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+                write!(f, "{}", char::from(self))
+            }
+        }
+
         alphabet!{
             $(#[$($flag)*])*
             ($($vis)*)

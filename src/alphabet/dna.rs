@@ -1,3 +1,5 @@
+/// A fully redundant DNA alphabet.
+
 use errors::SeqError;
 use ::{Complement, Match, RedundantAlphabet};
 
@@ -130,6 +132,8 @@ impl From<&DNA> for DNA {
 impl RedundantAlphabet for DNA {
 
     fn union(&self, other: &Self) -> Self {
+        // This implementation can be rewritten to use bit operations.
+        // Currently favoring simpler approaches to see what the compiler does.
         match (&self, &other) {
             (DNA::A, DNA::A) => DNA::A,
             (DNA::A, DNA::C) => DNA::M,
@@ -346,6 +350,8 @@ impl RedundantAlphabet for DNA {
     }
 
     fn intersection(&self, other: &Self) -> Option<Self> {
+        // This implementation can be rewritten to use bit operations.
+        // Currently favoring simpler approaches to see what the compiler does.
         match (&self, &other) {
             (DNA::A, DNA::A) => Some(DNA::A),
             (DNA::A, DNA::C) => None,
@@ -562,6 +568,8 @@ impl RedundantAlphabet for DNA {
     }
 
     fn difference(&self, other: &Self) -> Option<Self> {
+        // This implementation can be rewritten to use bit operations.
+        // Currently favoring simpler approaches to see what the compiler does.
         match (&self, &other) {
             (DNA::A, DNA::A) => None,
             (DNA::A, DNA::C) => Some(DNA::A),
@@ -803,6 +811,16 @@ impl RedundantAlphabet for DNA {
 mod tests {
     use super::*;
     use test::{Bencher, black_box};
+    use proptest::prelude::any;
+    use proptest::sample::select;
+    use traits::ReverseComplement;
+
+    #[test]
+    fn test_complement_vec() {
+        let d = vec![DNA::A, DNA::T, DNA::G, DNA::C];
+        let c: Vec<DNA> = d.reverse_complement().rev().collect();
+        assert_eq!(c, vec![DNA::T, DNA::A, DNA::C, DNA::G]);
+    }
 
     #[test]
     fn test_match() {
@@ -835,124 +853,170 @@ mod tests {
         assert_eq!(DNA::cardinality(), 15);
     }
 
-    #[test]
-    fn test_to_from_u8() {
-        for base in DNA::variants() {
-            assert_eq!(DNA::try_from(u8::from(base)).unwrap(), base);
-            assert_eq!(DNA::try_from(&u8::from(base)).unwrap(), base);
-            assert_eq!(DNA::try_from(u8::from(base).to_ascii_lowercase()).unwrap(), base);
-            assert_eq!(DNA::try_from(&u8::from(base).to_ascii_lowercase()).unwrap(), base);
+    proptest!{
+        // Basic parsing properties.
+        #[test]
+        fn test_from_u8_doesnt_crash(c in any::<u8>()) {
+            let _dummy = DNA::try_from(c);
         }
-    }
 
-    #[test]
-    fn test_to_from_char() {
-        for base in DNA::variants() {
-            assert_eq!(DNA::try_from(char::from(base)).unwrap(), base);
-            assert_eq!(DNA::try_from(&char::from(base)).unwrap(), base);
-            assert_eq!(DNA::try_from(char::from(base).to_ascii_lowercase()).unwrap(), base);
-            assert_eq!(DNA::try_from(&char::from(base).to_ascii_lowercase()).unwrap(), base);
+        #[test]
+        fn test_from_char_doesnt_crash(c in any::<char>()) {
+            let _dummy = DNA::try_from(c);
         }
-    }
 
-    #[test]
-    fn test_complement() {
-        for base in DNA::variants() {
-            assert_eq!(base.complement().complement(), base);
+        #[test]
+        fn test_to_u8_doesnt_crash(b in select(DNA::variants())) {
+            let _dummy = u8::from(b);
         }
-    }
 
-    #[test]
-    fn test_union_is_reciprocal() {
-        for base1 in DNA::variants() {
-            for base2 in DNA::variants() {
-                assert_eq!(base1.union(&base2), base2.union(&base1));
-            }
+        #[test]
+        fn test_to_char_doesnt_crash(b in select(DNA::variants())) {
+            let _dummy = char::from(b);
         }
-    }
 
-    #[test]
-    fn test_intersection_is_reciprocal() {
-        for base1 in DNA::variants() {
-            for base2 in DNA::variants() {
-                assert_eq!(base1.intersection(&base2), base2.intersection(&base1));
-            }
+        // converting from DNA to u8 and back to DNA should recover same base.
+        #[test]
+        fn test_from_to_u8_recovers_original(b in select(DNA::variants())) {
+            assert_eq!(DNA::try_from(u8::from(b)).unwrap(), b);
+            assert_eq!(DNA::try_from(&u8::from(b)).unwrap(), b);
+            assert_eq!(
+                DNA::try_from(u8::from(b).to_ascii_lowercase()).unwrap(),
+                b
+            );
+            assert_eq!(
+                DNA::try_from(&u8::from(b).to_ascii_lowercase()).unwrap(),
+                b
+            );
         }
-    }
 
-    #[test]
-    fn test_intersection_gives_difference() {
-        for base1 in DNA::variants() {
-            for base2 in DNA::variants() {
-                if base2 == DNA::N {
-                    continue
-                }
-
-                let compl = DNA::N.difference(&base2).unwrap();
-                let diff = base1.intersection(&compl);
-                assert_eq!(base1.difference(&base2), diff);
-            }
+        #[test]
+        fn test_from_to_char_recovers_original(b in select(DNA::variants())) {
+            assert_eq!(DNA::try_from(char::from(b)).unwrap(), b);
+            assert_eq!(DNA::try_from(&char::from(b)).unwrap(), b);
+            assert_eq!(
+                DNA::try_from(char::from(b).to_ascii_lowercase()).unwrap(),
+                b
+            );
+            assert_eq!(
+                DNA::try_from(&char::from(b).to_ascii_lowercase()).unwrap(),
+                b
+            );
         }
-    }
 
-    // A union (B union C) == (A union B) union C
-    #[test]
-    fn test_set_associative() {
-        for base1 in DNA::variants() {
-            for base2 in DNA::variants() {
-                for base3 in DNA::variants() {
-                    let left = base1.union(&base2.union(&base3));
-                    let right = base1.union(&base2).union(&base3);
-                    assert_eq!(left, right);
-
-                    let left = base2
-                        .intersection(&base3)
-                        .and_then(|b| base1.intersection(&b));
-
-                    let right = base1
-                        .intersection(&base2)
-                        .and_then(|b| b.intersection(&base3));
-
-                    assert_eq!(left, right);
-                }
-            }
+        // The complement of the complement of a base is just the base.
+        #[test]
+        fn test_complement_twice_recovers_original(b in select(DNA::variants())) {
+            assert_eq!(b.complement().complement(), b);
         }
-    }
 
-    // A union (B intersection C) == (A union B) intersection (A union C)
-    // A intersection (B untion C) == (A inter B) union (A inter C)
-    // Note that because we don't have proper null sets, we can't do much
-    // with `None` option variants.
-    #[test]
-    fn test_set_distributive() {
-        for base1 in DNA::variants() {
-            for base2 in DNA::variants() {
-                for base3 in DNA::variants() {
-                    let left = base1.intersection(&(base2.union(&base3)));
-                    let right1 = base1.intersection(&base2);
-                    let right2 = base1.intersection(&base3);
-
-                    if let (Some(r1), Some(r2)) = (right1, right2) {
-                        let right = r1.union(&r2);
-
-                        assert_eq!(left, Some(right));
-                    }
-
-                    let left = base2
-                        .intersection(&base3)
-                        .map(|b| base1.union(&b));
-
-                    let right1 = base1.union(&base2);
-                    let right2 = base1.union(&base3);
-                    let right = right1.intersection(&right2);
-
-                    if let (Some(l), Some(r)) = (left, right) {
-                        assert_eq!(l, r);
-                    }
-                }
-            }
+        // Test some properties of the redundant set-like operations.
+        #[test]
+        fn test_union_is_reciprocal(
+            base1 in select(DNA::variants()),
+            base2 in select(DNA::variants()),
+        ) {
+            assert_eq!(base1.union(&base2), base2.union(&base1));
         }
-    }
+
+        #[test]
+        fn test_intersection_is_reciprocal(
+            base1 in select(DNA::variants()),
+            base2 in select(DNA::variants()),
+        ) {
+            assert_eq!(base1.intersection(&base2), base2.intersection(&base1));
+        }
+
+        // A \ B == A intersect (B^complement^)
+        #[test]
+        fn test_intersection_gives_difference(
+            base1 in select(DNA::variants()),
+            base2 in select(DNA::variants()),
+        ) {
+            // This will be None if base2 is N
+            let compl: Option<DNA> = DNA::N.difference(&base2);
+
+            // This will be None if base2 is N or no interection.
+            let diff: Option<DNA> = compl
+                .and_then(|c| base1.intersection(&c));
+
+            assert_eq!(base1.difference(&base2), diff);
+        }
+
+        // A union (B union C) == (A union B) union C
+        #[test]
+        fn test_set_union_associative(
+            base1 in select(DNA::variants()),
+            base2 in select(DNA::variants()),
+            base3 in select(DNA::variants()),
+        ) {
+            let left = base1.union(&base2.union(&base3));
+            let right = base1.union(&base2).union(&base3);
+            assert_eq!(left, right);
+        }
+
+        // A inter (B inter C) == (A inter B) inter C
+        #[test]
+        fn test_set_intersection_associative(
+            base1 in select(DNA::variants()),
+            base2 in select(DNA::variants()),
+            base3 in select(DNA::variants()),
+        ) {
+            let left = base2
+                .intersection(&base3)
+                .and_then(|b| base1.intersection(&b));
+
+            let right = base1
+                .intersection(&base2)
+                .and_then(|b| b.intersection(&base3));
+
+            assert_eq!(left, right);
+        }
+
+        // A union (B intersection C) == (A union B) intersection (A union C)
+        #[test]
+        fn test_set_union_distributive(
+            base1 in select(DNA::variants()),
+            base2 in select(DNA::variants()),
+            base3 in select(DNA::variants()),
+        ) {
+            // map_or is used because empty sets are represented with None,
+            // and we don't handle this in the intersection functions.
+            let left = base2
+                .intersection(&base3)
+                .map_or(base1, |b| base1.union(&b));
+
+            let right1 = base1.union(&base2);
+            let right2 = base1.union(&base3);
+            let right: Option<DNA> = right1.intersection(&right2);
+
+            // Note that this will always at least be A (because union),
+            // so unwrapping should be safe.
+            assert_eq!(left, right.unwrap());
+        }
+
+        // A intersection (B union C) == (A inter B) union (A inter C)
+        #[test]
+        fn test_set_intersection_distributive(
+            base1 in select(DNA::variants()),
+            base2 in select(DNA::variants()),
+            base3 in select(DNA::variants()),
+        ) {
+            let left: Option<DNA> = base1.intersection(&(base2.union(&base3)));
+
+            let right1: Option<DNA> = base1.intersection(&base2);
+            let right2: Option<DNA> = base1.intersection(&base3);
+
+            // If right1 is none, just return right2.
+            // If right1 is Some, map_or union over right2.
+            // If right2 is None, returns right1.
+            let right: Option<DNA> = right1.map_or(right2, |b| {
+                right2.map_or(right1, |c| Some(b.union(&c)))
+            });
+
+            assert_eq!(left, right);
+        }
+    } // End proptest!
 
     #[bench]
     fn bench_complement(b: &mut Bencher) {

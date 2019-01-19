@@ -216,5 +216,12 @@ mod tests {
         let met = Codon(DNA::A, DNA::T, DNA::G);
         assert_eq!(met.translate(), AA::M);
     }
+
+    #[test]
+    fn test_translate_arr() {
+        let arr = vec![Codon(DNA::A, DNA::T, DNA::G), Codon(DNA::C, DNA::T, DNA::C)];
+        let mapped: Vec<AA> = arr.iter().map(|c| c.translate()).collect();
+        assert_eq!(mapped, vec![AA::M, AA::L]);
+    }
 }
 

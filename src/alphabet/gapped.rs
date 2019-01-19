@@ -9,7 +9,7 @@
 use ::{Complement, Translate};
 
 use std::convert::TryFrom;
-
+use std::fmt;
 
 /// A gapped alphabet combines any type with a new enum.
 /// `Occ` for occupied.
@@ -521,6 +521,14 @@ impl<T: Into<char> + Copy> From<Gapped<T>> for char {
     }
 }
 
+impl<T> fmt::Display for Gapped<T>
+    where Gapped<T>: Into<char>,
+          T: Into<char> + Copy
+{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", char::from(self))
+    }
+}
 
 
 /// Complement is implemented for any wrapped type that also implements
