@@ -1,6 +1,6 @@
 /// A fully redundant DNA alphabet.
 
-use errors::SeqError;
+use errors::{SeqError, SeqErrorKind};
 use ::{Complement, Match, RedundantAlphabet};
 
 use std::convert::TryFrom;
@@ -121,12 +121,6 @@ impl Default for DNA {
     /// Returns [`N`][DNA::N].
     #[inline]
     fn default() -> Self { DNA::N }
-}
-
-impl From<&DNA> for DNA {
-    fn from(d: &DNA) -> Self {
-        *d
-    }
 }
 
 impl RedundantAlphabet for DNA {
@@ -813,7 +807,7 @@ mod tests {
     use test::{Bencher, black_box};
     use proptest::prelude::any;
     use proptest::sample::select;
-    use traits::ReverseComplement;
+    use ::ReverseComplement;
 
     #[test]
     fn test_complement_vec() {

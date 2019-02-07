@@ -3,7 +3,8 @@
 use crate::{Complement, Translate};
 use alphabet::AA;
 use alphabet::DNA;
-use errors::SeqError;
+use errors::{SeqError, SeqErrorKind};
+use failure::ResultExt;
 
 use std::convert::{TryFrom, TryInto};
 
@@ -44,29 +45,39 @@ impl<T> Codon<T> {
     ///
     /// ```
     /// use seqrs::alphabet::DNA;
+    /// use seqrs::alphabet::DNA::*;
     /// use seqrs::alphabet::Codon;
     ///
-    /// let codon = Codon::<DNA>::try_from_iter("aaa".chars()).unwrap();
-    /// assert_eq!(codon, Codon(DNA::A, DNA::A, DNA::A));
+    /// let codon = Codon::try_from_iter([A, A, A].iter()).unwrap();
+    /// assert_eq!(codon, Codon(A, A, A));
     /// ```
     pub fn try_from_iter<U, I>(bases: I) -> Result<Self, SeqError> where
-        U: TryInto<T>,
+        U: Into<T>,
         I: IntoIterator<Item = U>
     {
-        let mut bases = bases.into_iter();
+        let mut bases = bases.into_iter().map(|b| b.into());
 
-        let one = Self::item_to_type(bases.next())?;
-        let two = Self::item_to_type(bases.next())?;
-        let three = Self::item_to_type(bases.next())?;
+        let one = Self::item_to_type(bases.next(), 1)?;
+        let two = Self::item_to_type(bases.next(), 2)?;
+        let three = Self::item_to_type(bases.next(), 3)?;
 
         Ok(Codon(one, two, three))
     }
 
-    /// TODO: Fix error so that it propagates through try_from.
-    fn item_to_type<U: TryInto<T>>(item: Option<U>) -> Result<T, SeqError> {
-        item.ok_or_else(|| SeqError::CodonLengthError { n: 0 })?
-            .try_into()
-            .map_err(|_| SeqError::CodonLengthError { n: 0})
+    fn item_to_type(item: Option<T>, pos: usize) -> Result<T, SeqError> {
+        item.ok_or_else(|| SeqErrorKind::CodonLengthError { n: pos }.into())
+    }
+}
+
+
+impl<T, U, I> TryFrom<I> for Codon<T> where
+        U: Into<T>,
+        I: IntoIterator<Item = U>,
+{
+    type Error = SeqError;
+
+    fn try_from(bases: I) -> Result<Self, Self::Error> {
+        Codon::<T>::try_from_iter(I)
     }
 }
 
@@ -186,16 +197,7 @@ mod tests {
 
     #[test]
     fn test_try_from() {
-        let codon = Codon::<DNA>::try_from_iter(['a', 'a', 'a'].iter()).unwrap();
-        assert_eq!(codon, Codon(DNA::A, DNA::A, DNA::A));
-
-        let b = "aaa";
-        let codon = Codon::<DNA>::try_from_iter(b.chars()).unwrap();
-        assert_eq!(codon, Codon(DNA::A, DNA::A, DNA::A));
-
-        println!("{}", b);
-
-        let codon = Codon::<DNA>::try_from_iter([DNA::A, DNA::A, DNA::A].iter()).unwrap();
+        let codon = Codon::try_from_iter([DNA::A, DNA::A, DNA::A].iter()).unwrap();
         assert_eq!(codon, Codon(DNA::A, DNA::A, DNA::A));
     }
 

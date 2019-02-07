@@ -20,4 +20,10 @@ pub mod alphabet;
 
 // Reexport traits to keep things succinct
 mod traits;
-pub use traits::{Match, RedundantAlphabet, Complement, Translate};
+pub use traits::{Match, RedundantAlphabet};
+
+mod translate;
+pub use translate::Translate;
+
+mod complement;
+pub use complement::{Complement, ReverseComplement};

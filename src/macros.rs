@@ -3,6 +3,7 @@
 ///
 
 use errors::SeqError;
+use errors::SeqErrorKind;
 
 /// Creates a single letter biological alphabet.
 ///
@@ -60,6 +61,13 @@ macro_rules! alphabet {
                 Self::variants().len()
             }
         }
+
+        impl From<&$name> for $name {
+            fn from(b: &Self) -> Self {
+                *b
+            }
+        }
+
     };
     (
         // Move bits from record field to after enum variant.
@@ -221,7 +229,7 @@ macro_rules! alphabet {
             fn try_from(base: &u8) -> Result<Self, Self::Error> {
                 match base.to_ascii_uppercase() {
                     $($byte => Ok($name::$variant),)*
-                    b => Err(SeqError::AlphabetReadError { base: b as char }),
+                    b => Err(SeqErrorKind::AlphabetReadError { base: b as char }.into()),
                 }
             }
         }

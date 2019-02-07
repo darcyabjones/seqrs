@@ -1,7 +1,7 @@
 /// Definitions for the Protein alphabet
 
 use ::RedundantAlphabet;
-use errors::SeqError;
+use errors::{SeqError, SeqErrorKind};
 use crate::Match;
 use std::convert::TryFrom;
 
@@ -177,12 +177,6 @@ impl Default for AA {
     /// Returns [`X`][AA::X].
     #[inline]
     fn default() -> Self { AA::X }
-}
-
-impl From<&AA> for AA {
-    fn from(d: &AA) -> Self {
-        *d
-    }
 }
 
 impl RedundantAlphabet for AA {
