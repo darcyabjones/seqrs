@@ -13,10 +13,8 @@ pub struct SeqError {
 pub enum SeqErrorKind {
     #[fail(display = "Encountered unknown character in alphabet {}", base)]
     AlphabetReadError { base: char },
-    #[fail(display = "Encountered iterator with size {} for codon, which should have size 3.", n)]
-    CodonLengthError { n: usize },
-    #[fail(display = "A proper error type for auto try_into impls.")]
-    Dummy,
+    #[fail(display = "String must contain 3 characters to be parsed into codon.")]
+    CodonFromStrTooShort,
 }
 
 

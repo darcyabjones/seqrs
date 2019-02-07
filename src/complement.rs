@@ -46,44 +46,18 @@ impl<I, T> Iterator for ReverseComplementIterator<I>
         self.iter.size_hint()
     }
 
+    #[inline]
     fn try_fold<Acc, G, R>(&mut self, init: Acc, mut g: G) -> R
         where Self: Sized,
               G: FnMut(Acc, Self::Item) -> R,
               R: Try<Ok=Acc>,
     {
-        self.iter.try_rfold(init, move |acc, elt| g(acc, elt.complement()))
+        let mut accum = init;
+        while let Some(x) = self.next() {
+            accum = g(accum, x)?;
+        }
+        Try::from_ok(accum)
     }
-
-    fn fold<Acc, G>(self, init: Acc, mut g: G) -> Acc
-        where G: FnMut(Acc, Self::Item) -> Acc,
-    {
-        self.iter.rfold(init, move |acc, elt| g(acc, elt.complement()))
-    }
-
-    #[inline]
-    fn find<P>(&mut self, predicate: P) -> Option<Self::Item>
-        where P: FnMut(&Self::Item) -> bool
-    {
-        self.iter.rfind(predicate)
-    }
-
-    #[inline]
-    fn rposition<P>(&mut self, predicate: P) -> Option<usize>
-        where P: FnMut(Self::Item) -> bool,
-    {
-        self.iter.position(predicate)
-    }
-
-    /*
-    // Currently not impl because requirement for DoubleEndedIterator +
-    // ExactSizeIterator, might restrict impl.
-    #[inline]
-    fn position<P>(&mut self, predicate: P) -> Option<usize>
-        where P: FnMut(Self::Item) -> bool,
-    {
-        self.iter.rposition(predicate)
-    }
-    */
 }
 
 impl<I, T> DoubleEndedIterator for ReverseComplementIterator<I>
@@ -95,24 +69,17 @@ impl<I, T> DoubleEndedIterator for ReverseComplementIterator<I>
         self.iter.next().map(|b| b.complement())
     }
 
+    #[inline]
     fn try_rfold<Acc, G, R>(&mut self, init: Acc, mut g: G) -> R
         where Self: Sized,
               G: FnMut(Acc, Self::Item) -> R,
               R: Try<Ok=Acc>,
     {
-        self.iter.try_fold(init, move |acc, elt| g(acc, elt.complement()))
-    }
-
-    fn rfold<Acc, G>(self, init: Acc, mut g: G) -> Acc
-        where G: FnMut(Acc, Self::Item) -> Acc,
-    {
-        self.iter.fold(init, move |acc, elt| g(acc, elt.complement()))
-    }
-
-    fn rfind<P>(&mut self, predicate: P) -> Option<Self::Item>
-        where P: FnMut(&Self::Item) -> bool
-    {
-        self.iter.find(predicate)
+        let mut accum = init;
+        while let Some(x) = self.next_back() {
+            accum = g(accum, x)?;
+        }
+        Try::from_ok(accum)
     }
 }
 
@@ -120,10 +87,12 @@ impl<I, T> ExactSizeIterator for ReverseComplementIterator<I>
     where I: ExactSizeIterator<Item=T> + DoubleEndedIterator<Item=T>,
           T: Complement,
 {
+    #[inline]
     fn len(&self) -> usize {
         self.iter.len()
     }
 
+    #[inline]
     fn is_empty(&self) -> bool {
         self.iter.is_empty()
     }

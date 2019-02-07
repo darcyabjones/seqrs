@@ -1,12 +1,13 @@
 /// A generalised codon alphabet.
 
-use crate::{Complement, Translate};
+use ::Translate;
 use alphabet::AA;
 use alphabet::DNA;
 use errors::{SeqError, SeqErrorKind};
-use failure::ResultExt;
 
 use std::convert::{TryFrom, TryInto};
+use std::str::FromStr;
+
 
 /// Codons represented as tuple struct.
 /// The tuple struct with public fields is used to make pattern matching
@@ -34,50 +35,6 @@ impl<T> Codon<T> {
 
     pub fn third(self) -> T {
         self.2
-    }
-}
-
-impl<T> Codon<T> {
-
-    /// Parse a 3 member array as a Codon.
-    ///
-    /// # Examples:
-    ///
-    /// ```
-    /// use seqrs::alphabet::DNA;
-    /// use seqrs::alphabet::DNA::*;
-    /// use seqrs::alphabet::Codon;
-    ///
-    /// let codon = Codon::try_from_iter([A, A, A].iter()).unwrap();
-    /// assert_eq!(codon, Codon(A, A, A));
-    /// ```
-    pub fn try_from_iter<U, I>(bases: I) -> Result<Self, SeqError> where
-        U: Into<T>,
-        I: IntoIterator<Item = U>
-    {
-        let mut bases = bases.into_iter().map(|b| b.into());
-
-        let one = Self::item_to_type(bases.next(), 1)?;
-        let two = Self::item_to_type(bases.next(), 2)?;
-        let three = Self::item_to_type(bases.next(), 3)?;
-
-        Ok(Codon(one, two, three))
-    }
-
-    fn item_to_type(item: Option<T>, pos: usize) -> Result<T, SeqError> {
-        item.ok_or_else(|| SeqErrorKind::CodonLengthError { n: pos }.into())
-    }
-}
-
-
-impl<T, U, I> TryFrom<I> for Codon<T> where
-        U: Into<T>,
-        I: IntoIterator<Item = U>,
-{
-    type Error = SeqError;
-
-    fn try_from(bases: I) -> Result<Self, Self::Error> {
-        Codon::<T>::try_from_iter(I)
     }
 }
 
@@ -188,40 +145,201 @@ impl Translate<AA> for Codon<DNA> {
 }
 
 
+pub trait Codons<I> {
+    type Item;
+    type Iter;
+
+    fn codons(self) -> CodonsIterator<I>;
+}
+
+impl<I, T, U> Codons<I> for U
+    where U: IntoIterator<Item=T, IntoIter=I>,
+          I: Iterator<Item=T>,
+{
+    type Item = T;
+    type Iter = I;
+
+    fn codons(self) -> CodonsIterator<I> {
+        CodonsIterator{ iter: self.into_iter() }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct CodonsIterator<I> {
+    iter: I,
+}
+
+impl<I, T> Iterator for CodonsIterator<I>
+    where I: Iterator<Item=T>,
+{
+    type Item = Codon<T>;
+
+    #[inline]
+    fn next(&mut self) -> Option<Self::Item> {
+        let one = self.iter.next()?;
+        let two = self.iter.next()?;
+        let three = self.iter.next()?;
+
+        Some(Codon(one, two, three))
+    }
+
+    /// Calculate the length of codon iterable.
+    ///
+    /// # Examples:
+    ///
+    /// ```
+    /// use seqrs::alphabet::DNA;
+    /// use seqrs::alphabet::DNA::*;
+    /// use seqrs::alphabet::Codon;
+    /// use seqrs::alphabet::Codons;
+    ///
+    /// let seq = vec![A, A].codons();
+    /// assert_eq!((0, Some(0)), seq.size_hint());
+    ///
+    /// let seq = vec![A, A, A].codons();
+    /// assert_eq!((1, Some(1)), seq.size_hint());
+    ///
+    /// let seq = vec![A, A, A, A].codons();
+    /// assert_eq!((1, Some(1)), seq.size_hint());
+    ///
+    /// let seq = vec![A, A, A, A, A].codons();
+    /// assert_eq!((1, Some(1)), seq.size_hint());
+    ///
+    /// let seq = vec![A, A, A, A, A, A].codons();
+    /// assert_eq!((2, Some(2)), seq.size_hint());
+    /// ```
+    #[inline]
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        let (length, _) = self.iter.size_hint();
+        let length = length / 3;
+        (length, Some(length))
+    }
+}
+
+
+impl<I, T> DoubleEndedIterator for CodonsIterator<I>
+    where I: DoubleEndedIterator<Item=T> + ExactSizeIterator<Item=T>,
+{
+    #[inline]
+    fn next_back(&mut self) -> Option<Self::Item> {
+        let n = self.iter.len() % 3;
+        for _ in 0..n {
+            self.iter.next_back()?;
+        }
+
+        let three = self.iter.next_back()?;
+        let two = self.iter.next_back()?;
+        let one = self.iter.next_back()?;
+
+        Some(Codon(one, two, three))
+    }
+}
+
+
+impl<I, T> ExactSizeIterator for CodonsIterator<I>
+    where I: ExactSizeIterator<Item=T>,
+{
+    #[inline]
+    fn len(&self) -> usize {
+        self.iter.len() / 3
+    }
+
+    #[inline]
+    fn is_empty(&self) -> bool {
+        self.iter.len() < 3
+    }
+}
+
+
+impl<T> FromStr for Codon<T> 
+    where T: TryFrom<char, Error=SeqError>,
+{
+    type Err = SeqError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let mut chars = s.chars().map(|c| c.try_into());
+        let err = || SeqError::from(SeqErrorKind::CodonFromStrTooShort);
+        let one = chars.next().ok_or_else(err)??;
+        let two = chars.next().ok_or_else(err)??;
+        let three = chars.next().ok_or_else(err)??;
+
+        Ok(Codon(one, two, three))
+    }
+}
+
+
+
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use alphabet::DNA;
+    use alphabet::DNA::*;
     use alphabet::AA;
-    use std::convert::TryFrom;
+
+    /*
+    #[test]
+    fn test_codon_collect() {
+        let c: Result<Codon<DNA>, _>= vec![A, T, C].iter().collect();
+        assert_eq!(c.unwrap(), Codon(A, T, G));
+    }
+    */
 
     #[test]
-    fn test_try_from() {
-        let codon = Codon::try_from_iter([DNA::A, DNA::A, DNA::A].iter()).unwrap();
-        assert_eq!(codon, Codon(DNA::A, DNA::A, DNA::A));
+    fn test_codon_from_str() {
+        let c = "ATG".parse::<Codon<DNA>>().unwrap();
+        assert_eq!(c, Codon(A, T, G));
+    }
+
+    #[test]
+    fn test_codon_iter() {
+        let mut arr = vec![A, T, G, C].codons();
+        assert_eq!(Some(Codon(A, T, G)), arr.next());
+        assert_eq!(None, arr.next());
+    }
+
+    #[test]
+    fn test_codon_rev_iter() {
+        let mut arr = vec![A, T, G, C].codons();
+        assert_eq!(Some(Codon(A, T, G)), arr.next_back());
+        assert_eq!(None, arr.next_back());
+
+        let mut arr = vec![A, T, G, C, A, A, G, A].codons();
+        assert_eq!(Some(Codon(C, A, A)), arr.next_back());
+        assert_eq!(Some(Codon(A, T, G)), arr.next_back());
+        assert_eq!(None, arr.next_back());
+    }
+
+    #[test]
+    fn test_codon_len() {
+        let mut arr = vec![A, T, G, C].codons();
+        assert_eq!(1, arr.len());
+        assert_eq!(false, arr.is_empty());
+        let _ = arr.next();
+        assert_eq!(true, arr.is_empty());
     }
 
     #[test]
     fn test_eq() {
-        assert_eq!(Codon::new(DNA::A, DNA::T, DNA::G), Codon(DNA::A, DNA::T, DNA::G));
+        assert_eq!(Codon::new(A, T, G), Codon(A, T, G));
     }
 
     #[test]
     fn test_access() {
-        let met = Codon(DNA::A, DNA::T, DNA::G);
-        assert_eq!(met.0, DNA::A);
-        assert_eq!(met.first(), DNA::A);
+        let met = Codon(A, T, G);
+        assert_eq!(met.0, A);
+        assert_eq!(met.first(), A);
     }
 
     #[test]
     fn test_translate() {
-        let met = Codon(DNA::A, DNA::T, DNA::G);
+        let met = Codon(A, T, G);
         assert_eq!(met.translate(), AA::M);
     }
 
     #[test]
     fn test_translate_arr() {
-        let arr = vec![Codon(DNA::A, DNA::T, DNA::G), Codon(DNA::C, DNA::T, DNA::C)];
+        let arr = vec![Codon(A, T, G), Codon(C, T, C)];
         let mapped: Vec<AA> = arr.iter().map(|c| c.translate()).collect();
         assert_eq!(mapped, vec![AA::M, AA::L]);
     }

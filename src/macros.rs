@@ -2,8 +2,6 @@
 ///
 ///
 
-use errors::SeqError;
-use errors::SeqErrorKind;
 
 /// Creates a single letter biological alphabet.
 ///
@@ -313,14 +311,12 @@ macro_rules! alphabet {
 }
 
 
-
-
-
 #[cfg(test)]
 mod tests {
-    use super::*;
     use ::Match;
     use ::Complement;
+    use errors::SeqError;
+    use errors::SeqErrorKind;
     use std::convert::TryFrom;
 
     alphabet! {

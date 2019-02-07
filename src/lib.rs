@@ -4,7 +4,6 @@
 #![feature(try_from)]
 extern crate test;
 
-#[macro_use]
 extern crate failure;
 
 #[cfg(test)]
