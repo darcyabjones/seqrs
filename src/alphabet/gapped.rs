@@ -6,7 +6,7 @@
 //! It is very similar to the Option<T> type, but with a few extra methods
 //! that were difficult to implement on top of option.
 
-use ::{Complement, Translate};
+use ::Complement;
 
 use std::convert::TryFrom;
 use std::fmt;
@@ -539,15 +539,15 @@ impl<T: Complement> Complement for Gapped<T> {
     }
 }
 
-
+/*
 /// Translate is implemented for any wrapped type that also implements
 /// translate.
 impl<A, T: Translate<A>> Translate<Gapped<A>> for Gapped<T> {
-    fn translate(&self) -> Gapped<A> {
+    fn translate(&self, HashMap<T, A>) -> Gapped<A> {
         self.as_ref().map(|a| a.translate())
     }
 }
-
+*/
 
 #[cfg(test)]
 mod tests {

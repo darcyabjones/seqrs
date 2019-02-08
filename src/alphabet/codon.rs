@@ -1,8 +1,5 @@
 /// A generalised codon alphabet.
 
-use ::Translate;
-use alphabet::AA;
-use alphabet::DNA;
 use errors::{SeqError, SeqErrorKind};
 
 use std::convert::{TryFrom, TryInto};
@@ -57,90 +54,20 @@ impl<T: Default> Default for Codon<T> {
     }
 }
 
-impl Translate<AA> for Codon<DNA> {
-    fn translate(&self) -> AA {
-        match self {
-            Codon(DNA::A, DNA::A, DNA::A) => AA::K,
-            Codon(DNA::A, DNA::A, DNA::C) => AA::N,
-            Codon(DNA::A, DNA::A, DNA::G) => AA::K,
-            Codon(DNA::A, DNA::A, DNA::R) => AA::K,
-            Codon(DNA::A, DNA::A, DNA::T) => AA::N,
-            Codon(DNA::A, DNA::A, DNA::Y) => AA::N,
-            Codon(DNA::A, DNA::C, _     ) => AA::T,
-            Codon(DNA::A, DNA::G, DNA::A) => AA::R,
-            Codon(DNA::A, DNA::G, DNA::G) => AA::R,
-            Codon(DNA::A, DNA::G, DNA::T) => AA::S,
-            Codon(DNA::A, DNA::G, DNA::C) => AA::S,
-            Codon(DNA::A, DNA::G, DNA::Y) => AA::S,
-            Codon(DNA::A, DNA::G, DNA::R) => AA::R,
-            Codon(DNA::A, DNA::T, DNA::A) => AA::I,
-            Codon(DNA::A, DNA::T, DNA::T) => AA::I,
-            Codon(DNA::A, DNA::T, DNA::C) => AA::I,
-            Codon(DNA::A, DNA::T, DNA::Y) => AA::I,
-            Codon(DNA::A, DNA::T, DNA::W) => AA::I,
-            Codon(DNA::A, DNA::T, DNA::H) => AA::I,
-            Codon(DNA::A, DNA::T, DNA::G) => AA::M,
-            Codon(DNA::C, DNA::A, DNA::A) => AA::Q,
-            Codon(DNA::C, DNA::A, DNA::C) => AA::H,
-            Codon(DNA::C, DNA::A, DNA::G) => AA::Q,
-            Codon(DNA::C, DNA::A, DNA::R) => AA::Q,
-            Codon(DNA::C, DNA::A, DNA::T) => AA::H,
-            Codon(DNA::C, DNA::A, DNA::Y) => AA::H,
-            Codon(DNA::C, DNA::C, _     ) => AA::P,
-            Codon(DNA::C, DNA::G, _     ) => AA::R,
-            Codon(DNA::C, DNA::T, _     ) => AA::L,
-            Codon(DNA::M, DNA::G, DNA::A) => AA::R,
-            Codon(DNA::M, DNA::G, DNA::G) => AA::R,
-            Codon(DNA::M, DNA::G, DNA::R) => AA::R,
-            Codon(DNA::M, DNA::T, DNA::A) => AA::J,
-            Codon(DNA::M, DNA::T, DNA::C) => AA::J,
-            Codon(DNA::M, DNA::T, DNA::M) => AA::J,
-            Codon(DNA::M, DNA::T, DNA::T) => AA::J,
-            Codon(DNA::M, DNA::T, DNA::W) => AA::J,
-            Codon(DNA::M, DNA::T, DNA::Y) => AA::J,
-            Codon(DNA::M, DNA::T, DNA::H) => AA::J,
-            Codon(DNA::G, DNA::A, DNA::A) => AA::E,
-            Codon(DNA::G, DNA::A, DNA::C) => AA::D,
-            Codon(DNA::G, DNA::A, DNA::G) => AA::E,
-            Codon(DNA::G, DNA::A, DNA::R) => AA::E,
-            Codon(DNA::G, DNA::A, DNA::T) => AA::D,
-            Codon(DNA::G, DNA::A, DNA::Y) => AA::D,
-            Codon(DNA::G, DNA::C, _     ) => AA::A,
-            Codon(DNA::G, DNA::G, _     ) => AA::G,
-            Codon(DNA::G, DNA::T, _     ) => AA::V,
-            Codon(DNA::R, DNA::A, DNA::C) => AA::B,
-            Codon(DNA::R, DNA::A, DNA::T) => AA::B,
-            Codon(DNA::R, DNA::A, DNA::Y) => AA::B,
-            Codon(DNA::S, DNA::A, DNA::A) => AA::Z,
-            Codon(DNA::S, DNA::A, DNA::G) => AA::Z,
-            Codon(DNA::S, DNA::A, DNA::R) => AA::Z,
-            Codon(DNA::T, DNA::A, DNA::A) => AA::Stop,
-            Codon(DNA::T, DNA::A, DNA::C) => AA::Y,
-            Codon(DNA::T, DNA::A, DNA::G) => AA::Stop,
-            Codon(DNA::T, DNA::A, DNA::R) => AA::Stop,
-            Codon(DNA::T, DNA::A, DNA::T) => AA::Y,
-            Codon(DNA::T, DNA::A, DNA::Y) => AA::Y,
-            Codon(DNA::T, DNA::C, _     ) => AA::S,
-            Codon(DNA::T, DNA::G, DNA::A) => AA::Stop,
-            Codon(DNA::T, DNA::G, DNA::C) => AA::C,
-            Codon(DNA::T, DNA::G, DNA::G) => AA::W,
-            Codon(DNA::T, DNA::G, DNA::R) => AA::Stop,
-            Codon(DNA::T, DNA::G, DNA::T) => AA::C,
-            Codon(DNA::T, DNA::G, DNA::Y) => AA::C,
-            Codon(DNA::T, DNA::R, DNA::A) => AA::Stop,
-            Codon(DNA::T, DNA::T, DNA::A) => AA::L,
-            Codon(DNA::T, DNA::T, DNA::C) => AA::F,
-            Codon(DNA::T, DNA::T, DNA::G) => AA::L,
-            Codon(DNA::T, DNA::T, DNA::R) => AA::L,
-            Codon(DNA::T, DNA::T, DNA::T) => AA::F,
-            Codon(DNA::T, DNA::T, DNA::Y) => AA::F,
-            Codon(DNA::W, DNA::T, DNA::A) => AA::J,
-            Codon(DNA::Y, DNA::T, DNA::A) => AA::L,
-            Codon(DNA::Y, DNA::T, DNA::G) => AA::L,
-            Codon(DNA::Y, DNA::T, DNA::R) => AA::L,
-            Codon(DNA::H, DNA::T, DNA::A) => AA::J,
-            _                             => AA::X,
-        }
+
+impl<T> FromStr for Codon<T> 
+    where T: TryFrom<char, Error=SeqError>,
+{
+    type Err = SeqError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let mut chars = s.chars().map(|c| c.try_into());
+        let err = || SeqError::from(SeqErrorKind::CodonFromStrTooShort);
+        let one = chars.next().ok_or_else(err)??;
+        let two = chars.next().ok_or_else(err)??;
+        let three = chars.next().ok_or_else(err)??;
+
+        Ok(Codon(one, two, three))
     }
 }
 
@@ -151,6 +78,7 @@ pub trait Codons<I> {
 
     fn codons(self) -> CodonsIterator<I>;
 }
+
 
 impl<I, T, U> Codons<I> for U
     where U: IntoIterator<Item=T, IntoIter=I>,
@@ -164,10 +92,12 @@ impl<I, T, U> Codons<I> for U
     }
 }
 
+
 #[derive(Debug, Clone)]
 pub struct CodonsIterator<I> {
     iter: I,
 }
+
 
 impl<I, T> Iterator for CodonsIterator<I>
     where I: Iterator<Item=T>,
@@ -251,39 +181,12 @@ impl<I, T> ExactSizeIterator for CodonsIterator<I>
 }
 
 
-impl<T> FromStr for Codon<T> 
-    where T: TryFrom<char, Error=SeqError>,
-{
-    type Err = SeqError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut chars = s.chars().map(|c| c.try_into());
-        let err = || SeqError::from(SeqErrorKind::CodonFromStrTooShort);
-        let one = chars.next().ok_or_else(err)??;
-        let two = chars.next().ok_or_else(err)??;
-        let three = chars.next().ok_or_else(err)??;
-
-        Ok(Codon(one, two, three))
-    }
-}
-
-
-
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use alphabet::DNA;
     use alphabet::DNA::*;
-    use alphabet::AA;
-
-    /*
-    #[test]
-    fn test_codon_collect() {
-        let c: Result<Codon<DNA>, _>= vec![A, T, C].iter().collect();
-        assert_eq!(c.unwrap(), Codon(A, T, G));
-    }
-    */
 
     #[test]
     fn test_codon_from_str() {
@@ -331,6 +234,7 @@ mod tests {
         assert_eq!(met.first(), A);
     }
 
+    /*
     #[test]
     fn test_translate() {
         let met = Codon(A, T, G);
@@ -343,5 +247,6 @@ mod tests {
         let mapped: Vec<AA> = arr.iter().map(|c| c.translate()).collect();
         assert_eq!(mapped, vec![AA::M, AA::L]);
     }
+    */
 }
 
