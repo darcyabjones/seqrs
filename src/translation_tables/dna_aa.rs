@@ -1,11 +1,14 @@
 use ::TranslationTable;
-use ::Codon;
-use ::alphabets::DNA::*;
+use ::alphabet::Codon;
+use ::alphabet::DNA;
+use ::alphabet::DNA::*;
+use ::alphabet::AA;
+use std::marker::PhantomData;
 
 pub struct Standard;
 
 impl TranslationTable<Codon<DNA>, AA> for Standard {
-    fn translation_table(&self, k: &Codon<DNA>) -> AA {
+    fn get(&self, k: &Codon<DNA>) -> AA {
         match k {
             Codon(A, A, A) => AA::K,
             Codon(A, A, C) => AA::N,

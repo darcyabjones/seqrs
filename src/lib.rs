@@ -25,7 +25,9 @@ mod matcher;
 pub use matcher::{Match, RedundantAlphabet};
 
 mod translate;
-pub use translate::Translate;
+pub use translate::{TranslationTable};
 
 mod complement;
 pub use complement::{Complement, ReverseComplement};
+
+pub mod translation_tables;
