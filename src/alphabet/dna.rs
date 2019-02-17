@@ -1,7 +1,8 @@
 /// A fully redundant DNA alphabet.
 
 use errors::{SeqError, SeqErrorKind};
-use ::{Complement, Match, RedundantAlphabet};
+use complement::Complement;
+use matcher::{Match, RedundantAlphabet};
 
 use std::convert::TryFrom;
 
@@ -807,7 +808,7 @@ mod tests {
     use test::{Bencher, black_box};
     use proptest::prelude::any;
     use proptest::sample::select;
-    use ::ReverseComplement;
+    use complement::ReverseComplement;
 
     #[test]
     fn test_complement_vec() {

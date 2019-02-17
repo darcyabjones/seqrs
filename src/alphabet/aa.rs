@@ -1,8 +1,7 @@
 /// Definitions for the Protein alphabet
 
-use ::RedundantAlphabet;
+use matcher::{RedundantAlphabet, Match};
 use errors::{SeqError, SeqErrorKind};
-use crate::Match;
 use std::convert::TryFrom;
 
 alphabet! {

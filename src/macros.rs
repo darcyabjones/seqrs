@@ -313,8 +313,8 @@ macro_rules! alphabet {
 
 #[cfg(test)]
 mod tests {
-    use ::Match;
-    use ::Complement;
+    use matcher::Match;
+    use complement::Complement;
     use errors::SeqError;
     use errors::SeqErrorKind;
     use std::convert::TryFrom;

@@ -1,8 +1,10 @@
 use std::ops::Try;
 
+
 pub trait Complement {
     fn complement(&self) -> Self;
 }
+
 
 pub trait ReverseComplement<I> {
     type Item;
@@ -10,6 +12,7 @@ pub trait ReverseComplement<I> {
 
     fn reverse_complement(self) -> ReverseComplementIterator<I>;
 }
+
 
 impl<I, T, U> ReverseComplement<I> for U
     where U: IntoIterator<Item=T, IntoIter=I>,
@@ -24,11 +27,13 @@ impl<I, T, U> ReverseComplement<I> for U
     }
 }
 
+
 /// A wrapper around map and rev.
 #[derive(Debug, Clone)]
 pub struct ReverseComplementIterator<I> {
     iter: I,
 }
+
 
 impl<I, T> Iterator for ReverseComplementIterator<I>
     where I: DoubleEndedIterator<Item=T>,
@@ -60,6 +65,7 @@ impl<I, T> Iterator for ReverseComplementIterator<I>
     }
 }
 
+
 impl<I, T> DoubleEndedIterator for ReverseComplementIterator<I>
     where I: DoubleEndedIterator<Item=T>,
           T: Complement,
@@ -82,6 +88,7 @@ impl<I, T> DoubleEndedIterator for ReverseComplementIterator<I>
         Try::from_ok(accum)
     }
 }
+
 
 impl<I, T> ExactSizeIterator for ReverseComplementIterator<I>
     where I: ExactSizeIterator<Item=T> + DoubleEndedIterator<Item=T>,

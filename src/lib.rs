@@ -10,8 +10,6 @@ extern crate failure;
 #[macro_use]
 extern crate proptest;
 
-extern crate lazy_static;
-
 pub mod utils;
 
 #[macro_use]
@@ -20,14 +18,9 @@ pub mod macros;
 pub mod errors;
 pub mod alphabet;
 
-// Reexport traits to keep things succinct
-mod matcher;
-pub use matcher::{Match, RedundantAlphabet};
-
-mod translate;
-pub use translate::{TranslationTable};
-
-mod complement;
-pub use complement::{Complement, ReverseComplement};
-
-pub mod translation_tables;
+pub mod matcher;
+pub mod complement;
+pub mod translate;
+pub mod codon;
+pub mod gapped;
+pub mod stopped;
