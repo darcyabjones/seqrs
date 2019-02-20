@@ -163,12 +163,6 @@ alphabet! {
             matches: [E, Q, X],
             is_iupac: true,
         };
-        Stop = {
-            chr: b'*',
-            name: "Stop",
-            matches: [],
-            is_iupac: true,
-        };
     }
 }
 
@@ -224,7 +218,6 @@ impl RedundantAlphabet for AA {
             (   AA::Z,    AA::E) => AA::Z,
             (   AA::Z,    AA::Q) => AA::Z,
             (   AA::Z,    AA::Z) => AA::Z,
-            (AA::Stop, AA::Stop) => AA::Stop,
             (       _,        _) => AA::X,
         }
     }
@@ -276,7 +269,6 @@ impl RedundantAlphabet for AA {
             (   AA::Z,    AA::E) => Some(AA::E),
             (   AA::Z,    AA::Q) => Some(AA::Q),
             (   AA::Z,    AA::Z) => Some(AA::Z),
-            (AA::Stop, AA::Stop) => Some(AA::Stop),
             (       _,        _) => None,
         }
     }
@@ -322,7 +314,6 @@ impl RedundantAlphabet for AA {
             (   AA::Z,    AA::E) => Some(AA::Q),
             (   AA::Z,    AA::Q) => Some(AA::E),
             (   AA::Z,    AA::Z) => None,
-            (AA::Stop, AA::Stop) => None,
             (       a,        _) => Some(*a),
         }
     }
@@ -343,7 +334,7 @@ mod tests {
 
     #[test]
     fn test_cardinality() {
-        assert_eq!(AA::cardinality(), 27);
+        assert_eq!(AA::cardinality(), 26);
     }
 
     proptest!{

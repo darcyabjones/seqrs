@@ -129,7 +129,7 @@ impl RedundantAlphabet for DNA {
     fn union(&self, other: &Self) -> Self {
         // This implementation can be rewritten to use bit operations.
         // Currently favoring simpler approaches to see what the compiler does.
-        match (&self, &other) {
+        match (self, other) {
             (DNA::A, DNA::A) => DNA::A,
             (DNA::A, DNA::C) => DNA::M,
             (DNA::A, DNA::M) => DNA::M,
@@ -347,7 +347,7 @@ impl RedundantAlphabet for DNA {
     fn intersection(&self, other: &Self) -> Option<Self> {
         // This implementation can be rewritten to use bit operations.
         // Currently favoring simpler approaches to see what the compiler does.
-        match (&self, &other) {
+        match (self, other) {
             (DNA::A, DNA::A) => Some(DNA::A),
             (DNA::A, DNA::C) => None,
             (DNA::A, DNA::M) => Some(DNA::A),
@@ -558,7 +558,7 @@ impl RedundantAlphabet for DNA {
             (DNA::B, DNA::D) => Some(DNA::K),
             (DNA::B, DNA::B) => Some(DNA::B),
             (DNA::B, DNA::N) => Some(DNA::B),
-            (DNA::N, &base  ) => Some(*base),
+            (DNA::N, base  ) => Some(*base),
         }
     }
 

@@ -300,7 +300,7 @@ mod tests {
     use alphabet::DNA::*;
     use translate::NCBITransTable;
     use stopped::Stopped;
-    use stopped::Stopped::{Res, StopOr, Stop};
+    use stopped::Stopped::Res;
     use alphabet::AA;
 
 
