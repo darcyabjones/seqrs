@@ -1,18 +1,27 @@
 //! Generalised gapped alphabets.
 //!
 //! Gapped alphabets extend regular alphabets with a sum type and wrapping
-//! the base in a struct.
+//! the base in a tuple struct.
 //!
-//! It is very similar to the Option<T> type, but with a few extra methods
-//! that were difficult to implement on top of option.
 
 use complement::Complement;
 
 use std::convert::TryFrom;
 use std::fmt;
 
-/// A gapped alphabet combines any type with a new enum.
-/// `Occ` for occupied.
+/// A gapped alphabet essentially adds a new [`Gap`] variant to the wrapped type.
+/// [`Base`] is used to contain the wrapped alphabet variants (apologies to
+/// Amino Acid fans out there :) ). [`Gap`] represents a gap in the sequence.
+///
+/// It is very similar to the [`Option`] type, but with a few extra methods
+/// that were difficult to implement on top of option.
+///
+/// See the [module](../gapped/index.html) level documentation for more
+/// practical description of how to use it.
+///
+/// [`Gap`]: #variant.Gap
+/// [`Base`]: #variant.Base
+/// [`Option`]: https://doc.rust-lang.org/stable/std/option/enum.Option.html
 #[derive(Debug, Clone, Copy, Hash, PartialEq, PartialOrd, Eq, Ord)]
 pub enum Gapped<T> {
     Gap,
@@ -22,17 +31,20 @@ pub enum Gapped<T> {
 
 impl<T> Gapped<T> {
 
-    /// Returns true if is Base option.
+    /// Returns true if is [`Base`] option.
+    ///
+    /// [`Base`]: #variant.Base
     ///
     /// # Examples:
     ///
     /// ```
     /// use seqrs::gapped::Gapped;
+    /// use seqrs::gapped::Gapped::*;
     ///
-    /// let x: Gapped<char> = Gapped::Base('a');
+    /// let x = Base('a');
     /// assert_eq!(x.is_base(), true);
     ///
-    /// let x: Gapped<char> = Gapped::Gap;
+    /// let x: Gapped<char> = Gap;
     /// assert_eq!(x.is_base(), false);
     /// ```
     #[inline]
@@ -43,16 +55,21 @@ impl<T> Gapped<T> {
         }
     }
 
-    /// Returns true if is Gap option.
+
+    /// Returns true if is [`Gap`] option.
+    ///
+    /// [`Gap`]: #variant.Gap
     ///
     /// # Examples:
     ///
     /// ```
     /// use seqrs::gapped::Gapped;
-    /// let x: Gapped<char> = Gapped::Base('a');
+    /// use seqrs::gapped::Gapped::*;
+    ///
+    /// let x = Base('a');
     /// assert_eq!(x.is_gap(), false);
     ///
-    /// let x: Gapped<char> = Gapped::Gap;
+    /// let x: Gapped<char> = Gap;
     /// assert_eq!(x.is_gap(), true);
     /// ```
     #[inline]
@@ -60,28 +77,32 @@ impl<T> Gapped<T> {
         !self.is_base()
     }
 
-    /// Converts from `Gapped<T>` to `Gapped<&T>`.
+
+    /// Converts from [`Gapped<T>`] to [`Gapped<&T>`].
     ///
-    /// Based on impl of Option in stdlib.
-    /// From https://doc.rust-lang.org/src/core/option.rs.html#223-250 :
-    /// Convert an `Option<`[`String`]`>` into an `Option<`[`usize`]`>`, preserving the original.
-    /// The [`map`] method takes the `self` argument by value, consuming the original,
-    /// so this technique uses `as_ref` to first take an `Option` to a reference
-    /// to the value inside the original.
+    /// The [`map`] method takes the `self` argument by value, consuming the
+    /// original, so this technique uses [`as_ref`] to first take a [`Gapped`]
+    /// to a reference to the value inside the original.
     ///
-    /// [`map`]: enum.Option.html#method.map
-    /// [`String`]: ../../std/string/struct.String.html
-    /// [`usize`]: ../../std/primitive.usize.html
+    /// [`map`]: #method.map
+    /// [`as_ref`]: #method.as_ref
+    /// [`Gapped<T>`]: enum.Gapped.html
+    /// [`Gapped<&T>`]: enum.Gapped.html
+    /// [`Gapped`]: enum.Gapped.html
     ///
     /// # Examples
     ///
     /// ```
     /// use seqrs::gapped::Gapped;
-    /// let base: Gapped<char> = Gapped::Base('a');
+    /// use seqrs::gapped::Gapped::*;
+    ///
+    /// let base = Base('a');
+    ///
     /// // First, cast `Gapped<char>` to `Gapped<&char>` with `as_ref`,
-    /// // then consume *that* with `map`, leaving `text` on the stack.
-    /// let upper: Gapped<char> = base.as_ref().map(|s| s.to_ascii_uppercase());
-    /// assert_eq!(upper, Gapped::Base('A'));
+    /// // then consume *that* with `map`, leaving `base` on the stack.
+    /// let upper = base.as_ref().map(|s| s.to_ascii_uppercase());
+    ///
+    /// assert_eq!(upper, Base('A'));
     /// println!("still can print: {:?} into {:?}", base, upper);
     /// ```
     #[inline]
@@ -92,19 +113,24 @@ impl<T> Gapped<T> {
         }
     }
 
-    /// Converts from `Gapped<T>` to `Gapped<&mut T>`.
+
+    /// Converts from [`Gapped<T>`] to [`Gapped<&mut T>`].
+    ///
+    /// [`Gapped<T>`]: enum.Gapped.html
+    /// [`Gapped<&mut T>`]: enum.Gapped.html
     ///
     /// # Examples
     ///
     /// ```
     /// use seqrs::gapped::Gapped;
+    /// use seqrs::gapped::Gapped::*;
     ///
-    /// let mut x = Gapped::Base('a');
+    /// let mut x = Base('a');
     /// match x.as_mut() {
-    ///     Gapped::Base(v) => *v = 't',
-    ///     Gapped::Gap => {},
+    ///     Base(v) => *v = 't',
+    ///     Gap => {},
     /// }
-    /// assert_eq!(x, Gapped::Base('t'));
+    /// assert_eq!(x, Base('t'));
     /// ```
     #[inline]
     pub fn as_mut(&mut self) -> Gapped<&mut T> {
@@ -114,13 +140,15 @@ impl<T> Gapped<T> {
         }
     }
 
-    /// Unwraps a Gapped, yielding the content of a [`Base`].
+
+    /// Unwraps a [`Gapped`], yielding the content of a [`Base`].
     ///
     /// # Panics
     ///
     /// Panics if the value is a [`Gap`] with a custom panic message provided by
     /// `msg`.
     ///
+    /// [`Gapped`]: enum.Gapped.html
     /// [`Base`]: #variant.Base
     /// [`Gap`]: #variant.Gap
     ///
@@ -147,7 +175,8 @@ impl<T> Gapped<T> {
         }
     }
 
-    /// Moves the value `v` out of the `Gapped<T>` if it is [`Base(v)`].
+
+    /// Moves the value `v` out of the [`Gapped<T>`] if it is [`Base(v)`].
     ///
     /// In general, because this function may panic, its use is discouraged.
     /// Instead, prefer to use pattern matching and handle the [`Gap`]
@@ -157,6 +186,7 @@ impl<T> Gapped<T> {
     ///
     /// Panics if the self value equals [`Gap`].
     ///
+    /// [`Gapped<T>`]: enum.Gapped.html
     /// [`Base(v)`]: #variant.Base
     /// [`Gap`]: #variant.Gap
     ///
@@ -183,21 +213,23 @@ impl<T> Gapped<T> {
         }
     }
 
+
     /// Returns the contained value or a default.
     ///
-    /// Arguments passed to `unwrap_or` are eagerly evaluated; if you are passing
+    /// Arguments passed to [`unwrap_or`] are eagerly evaluated; if you are passing
     /// the result of a function call, it is recommended to use [`unwrap_or_else`],
     /// which is lazily evaluated.
     ///
+    /// [`unwrap_or`]: #method.unwrap_or
     /// [`unwrap_or_else`]: #method.unwrap_or_else
     ///
     /// # Examples
     ///
     /// ```
-    /// use seqrs::gapped::Gapped;
+    /// use seqrs::gapped::Gapped::*;
     ///
-    /// assert_eq!(Gapped::Base('A').unwrap_or('T'), 'A');
-    /// assert_eq!(Gapped::Gap.unwrap_or('T'), 'T');
+    /// assert_eq!(Base('A').unwrap_or('T'), 'A');
+    /// assert_eq!(Gap.unwrap_or('T'), 'T');
     /// ```
     #[inline]
     pub fn unwrap_or(self, def: T) -> T {
@@ -207,15 +239,16 @@ impl<T> Gapped<T> {
         }
     }
 
+
     /// Returns the contained value or computes it from a closure.
     ///
     /// # Examples
     ///
     /// ```
-    /// use seqrs::gapped::Gapped;
+    /// use seqrs::gapped::Gapped::*;
     ///
-    /// assert_eq!(Gapped::Base('A').unwrap_or_else(|| '-'), 'A');
-    /// assert_eq!(Gapped::Gap.unwrap_or_else(|| '-'), '-');
+    /// assert_eq!(Base('A').unwrap_or_else(|| '-'), 'A');
+    /// assert_eq!(Gap.unwrap_or_else(|| '-'), '-');
     /// ```
     #[inline]
     pub fn unwrap_or_else<F: FnOnce() -> T>(self, f: F) -> T {
@@ -225,16 +258,26 @@ impl<T> Gapped<T> {
         }
     }
 
-    /// Maps an `Gapped<T>` to `Gapped<U>` by applying a function to a contained value.
+
+    /// Maps a [`Gapped<T>`] to [`Gapped<U>`] by applying a function to
+    /// a contained value.
+    ///
+    /// [`Gapped<T>`]: enum.Gapped.html
+    /// [`Gapped<U>`]: enum.Gapped.html
     ///
     /// # Examples
     ///
     /// ```
     /// use seqrs::gapped::Gapped;
+    /// use seqrs::gapped::Gapped::*;
     ///
-    /// let base = Gapped::Base('a');
+    /// let base = Base('a');
     /// let maybe_base = base.map(|s| s.to_ascii_uppercase());
-    /// assert_eq!(maybe_base, Gapped::Base('A'));
+    /// assert_eq!(maybe_base, Base('A'));
+    ///
+    /// let base: Gapped<char> = Gap;
+    /// let maybe_base = base.map(|s| s.to_ascii_uppercase());
+    /// assert_eq!(maybe_base, Gap);
     /// ```
     #[inline]
     pub fn map<U, F: FnOnce(T) -> U>(self, f: F) -> Gapped<U> {
@@ -244,6 +287,7 @@ impl<T> Gapped<T> {
         }
     }
 
+
     /// Applies a function to the contained value (if any),
     /// or returns the provided default (if not).
     ///
@@ -251,11 +295,12 @@ impl<T> Gapped<T> {
     ///
     /// ```
     /// use seqrs::gapped::Gapped;
+    /// use seqrs::gapped::Gapped::*;
     ///
-    /// let base: Gapped<char> = Gapped::Base('A');
+    /// let base = Base('A');
     /// assert_eq!(base.map_or('T', |v| v.to_ascii_lowercase()), 'a');
     ///
-    /// let base: Gapped<char> = Gapped::Gap;
+    /// let base: Gapped<char> = Gap;
     /// assert_eq!(base.map_or('T', |v| v.to_ascii_lowercase()), 'T');
     /// ```
     #[inline]
@@ -265,6 +310,7 @@ impl<T> Gapped<T> {
             Gapped::Gap => default,
         }
     }
+
 
     /// Applies a function to the contained value (if any),
     /// or computes a default (if not).
@@ -276,7 +322,7 @@ impl<T> Gapped<T> {
     ///
     /// let k = 21;
     ///
-    /// let x: Gapped<char> = Gapped::Base('C');
+    /// let x = Gapped::Base('C');
     /// assert_eq!(x.map_or_else(|| 2 * k, |_| 4), 4);
     /// ```
     #[inline]
@@ -287,30 +333,67 @@ impl<T> Gapped<T> {
         }
     }
 
-    /// Transforms the `Gapped<T>` into a [`Result<T, E>`], mapping [`Base(v)`] to
-    /// [`Ok(v)`] and [`Gap`] to [`Err(err)`].
+
+    /// Applies a function that returns a [`Gapped`] value to the wrapped value.
     ///
-    /// Arguments passed to `ok_or` are eagerly evaluated; if you are passing the
-    /// result of a function call, it is recommended to use [`ok_or_else`], which is
-    /// lazily evaluated.
-    ///
-    /// [`Result<T, E>`]: ../../std/result/enum.Result.html
-    /// [`Ok(v)`]: ../../std/result/enum.Result.html#variant.Ok
-    /// [`Err(err)`]: ../../std/result/enum.Result.html#variant.Err
-    /// [`Gap`]: #variant.Gap
-    /// [`Base(v)`]: #variant.Base
-    /// [`ok_or_else`]: #method.ok_or_else
+    /// [`Gapped`]: enum.Gapped.html
     ///
     /// # Examples
     ///
     /// ```
     /// use seqrs::gapped::Gapped;
-    /// use seqrs::alphabet::DNA;
+    /// use seqrs::gapped::Gapped::*;
     ///
-    /// let x = Gapped::Base(DNA::A);
-    /// assert_eq!(x.base_or(0), Ok(DNA::A));
+    /// // Applies functions over wrapped types.
+    /// let x = Base('C');
+    /// assert_eq!(x.flat_map(|c| Base(c == 'C')), Base(true));
     ///
-    /// let x: Gapped<DNA> = Gapped::Gap;
+    /// // Can change the enum variant.
+    /// let x = Base('-').flat_map(|c| {
+    ///     if c == '-' {
+    ///         Gap
+    ///     } else {
+    ///         Base(c)
+    ///     }
+    /// });
+    /// assert_eq!(x, Gap);
+    ///
+    /// // Will not apply the function to the `Gap` variant.
+    /// let x: Gapped<char> = Gap;
+    /// assert_eq!(x.flat_map(|_| Base('x')), Gap);
+    /// ```
+    #[inline]
+    pub fn flat_map<U, F: FnOnce(T) -> Gapped<U>>(self, f: F) -> Gapped<U> {
+        self.map_or(Gapped::Gap, f)
+    }
+
+
+    /// Transforms the [`Gapped<T>`] into a [`Result<T, E>`], mapping [`Base(v)`] to
+    /// [`Ok(v)`] and [`Gap`] to [`Err(err)`].
+    ///
+    /// Arguments passed to [`base_or`] are eagerly evaluated; if you are passing the
+    /// result of a function call, it is recommended to use [`base_or_else`], which is
+    /// lazily evaluated.
+    ///
+    /// [`Gapped<T>`]: enum.Gapped.html
+    /// [`Result<T, E>`]: https://doc.rust-lang.org/std/result/enum.Result.html
+    /// [`Ok(v)`]: https://doc.rust-lang.org/std/result/enum.Result.html#variant.Ok
+    /// [`Err(err)`]: https://doc.rust-lang.org/std/result/enum.Result.html#variant.Err
+    /// [`Gap`]: #variant.Gap
+    /// [`Base(v)`]: #variant.Base
+    /// [`base_or`]: #method.base_or
+    /// [`base_or_else`]: #method.base_or_else
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use seqrs::gapped::Gapped;
+    /// use seqrs::gapped::Gapped::*;
+    ///
+    /// let x = Base('A');
+    /// assert_eq!(x.base_or(0), Ok('A'));
+    ///
+    /// let x: Gapped<char> = Gap;
     /// assert_eq!(x.base_or(0), Err(0));
     /// ```
     #[inline]
@@ -321,12 +404,14 @@ impl<T> Gapped<T> {
         }
     }
 
-    /// Transforms the `Gapped<T>` into a [`Result<T, E>`], mapping [`Base(v)`] to
-    /// [`Ok(v)`] and [`Gap`] to [`Err(err())`].
+
+    /// Transforms the [`Gapped<T>`] into a [`Result<T, E>`], mapping
+    /// [`Base(v)`] to [`Ok(v)`] and [`Gap`] to [`Err(err())`].
     ///
-    /// [`Result<T, E>`]: ../../std/result/enum.Result.html
-    /// [`Ok(v)`]: ../../std/result/enum.Result.html#variant.Ok
-    /// [`Err(err())`]: ../../std/result/enum.Result.html#variant.Err
+    /// [`Gapped<T>`]: enum.Gapped.html
+    /// [`Result<T, E>`]: https://doc.rust-lang.org/std/result/enum.Result.html
+    /// [`Ok(v)`]: https://doc.rust-lang.org/std/result/enum.Result.html#variant.Ok
+    /// [`Err(err())`]: https://doc.rust-lang.org/std/result/enum.Result.html#variant.Err
     /// [`Gap`]: #variant.Gap
     /// [`Base(v)`]: #variant.Base
     ///
@@ -334,12 +419,12 @@ impl<T> Gapped<T> {
     ///
     /// ```
     /// use seqrs::gapped::Gapped;
-    /// use seqrs::alphabet::DNA;
+    /// use seqrs::gapped::Gapped::*;
     ///
-    /// let x = Gapped::Base(DNA::A);
-    /// assert_eq!(x.base_or_else(|| 0), Ok(DNA::A));
+    /// let x = Base('A');
+    /// assert_eq!(x.base_or_else(|| 0), Ok('A'));
     ///
-    /// let x: Gapped<DNA> = Gapped::Gap;
+    /// let x: Gapped<char> = Gap;
     /// assert_eq!(x.base_or_else(|| 0), Err(0));
     /// ```
     #[inline]
@@ -350,15 +435,27 @@ impl<T> Gapped<T> {
         }
     }
 
+
+    /// Transforms the [`Gapped<T>`] into an [`Option<T>`], mapping [`Base(v)`]
+    /// into [`Some(v)`] and [`Gap`] into [`None`].
+    ///
+    /// [`Gapped<T>`]: enum.Gapped.html
+    /// [`Option<T>`]: https://doc.rust-lang.org/stable/std/option/enum.Option.html
+    /// [`None`]: https://doc.rust-lang.org/stable/std/option/enum.Option.html#variant.None
+    /// [`Some(v)`]: https://doc.rust-lang.org/stable/std/option/enum.Option.html#variant.Some
+    /// [`Gap`]: #variant.Gap
+    /// [`Base(v)`]: #variant.Base
+    ///
     /// # Examples
     ///
     /// ```
     /// use seqrs::gapped::Gapped;
+    /// use seqrs::gapped::Gapped::*;
     ///
-    /// let x = Gapped::Base('x');
+    /// let x = Base('x');
     /// assert_eq!(x.into_option(), Some('x'));
     ///
-    /// let x: Gapped<char> = Gapped::Gap;
+    /// let x: Gapped<char> = Gap;
     /// assert_eq!(x.into_option(), None);
     /// ```
     pub fn into_option(self) -> Option<T> {
@@ -368,6 +465,7 @@ impl<T> Gapped<T> {
         }
     }
 }
+
 
 impl<T> Default for Gapped<T> {
     /// Returns [`Gap`][Gapped::Gap].
@@ -439,6 +537,7 @@ impl<T: TryFrom<u8>> TryFrom<u8> for Gapped<T> {
         }
     }
 }
+
 
 impl<'a, T: TryFrom<&'a char>> TryFrom<&'a char> for Gapped<T> {
     type Error = T::Error;

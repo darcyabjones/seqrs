@@ -1,6 +1,7 @@
 /// A generalised codon alphabet.
 
 use translate::TranslationTable;
+use translate::CodonTagTable;
 use errors::{SeqError, SeqErrorKind};
 
 use std::convert::{TryFrom, TryInto};
@@ -16,26 +17,43 @@ use std::str::FromStr;
 pub struct Codon<T>(pub T, pub T, pub T);
 
 
-/// Codon constructor and accessors.
 impl<T> Codon<T> {
 
+    /// Constructor function.
     pub fn new(first: T, second: T, third: T) -> Self {
         Codon(first, second, third)
     }
 
+
+    /// Returns the first codon base.
     pub fn first<'a>(&'a self) -> &'a T {
         &self.0
     }
 
+
+    /// Returns the second codon base.
     pub fn second<'a>(&'a self) -> &'a T {
         &self.1
     }
 
+
+    /// Returns the third codon base.
     pub fn third<'a>(&'a self) -> &'a T {
         &self.2
     }
 
-    /// Examples:
+
+    /// Translates a [`Codon`] into an amino acid, using the mapping defined in
+    /// some type implementing [`TranslationTable`].
+    ///
+    /// Note that this is equivalent to calling the [`get`] method on the
+    /// object implementing [`TranslationTable`].
+    ///
+    /// ['Codon']: struct.Codon.html
+    /// [`TranslationTable`]: ../translate/trait.TranslationTable.html
+    /// [`get`]: ../translate/trait.TranslationTable.html#method.get
+    ///
+    /// # Examples:
     ///
     /// ```
     /// use seqrs::codon::Codon;
@@ -43,10 +61,24 @@ impl<T> Codon<T> {
     /// use seqrs::alphabet::AA;
     /// use seqrs::translate::TranslationTable;
     /// use seqrs::translate::NCBITransTable;
-    /// use seqrs::stopped::Stopped::{Res};
+    /// use seqrs::stopped::Stopped::{Res, StopOr, Stop};
     ///
     /// let codon = Codon(A, T, G);
     /// assert_eq!(codon.translate(&NCBITransTable::Standard), Res(AA::M));
+    ///
+    /// // This is equivalent to
+    /// assert_eq!(NCBITransTable::Standard.get(&Codon(A, T, G)), Res(AA::M));
+    ///
+    /// let codon = Codon(T, A, G);
+    /// assert_eq!(codon.translate(&NCBITransTable::Standard), Stop);
+    ///
+    /// // Stop or can represent cases of redundant ambiguity.
+    /// let codon = Codon(N, N, N);
+    /// assert_eq!(codon.translate(&NCBITransTable::Standard), StopOr(AA::X));
+    ///
+    /// // Stop or also represents edge cases of some translation tables.
+    /// let codon = Codon(T, G, A);
+    /// assert_eq!(codon.translate(&NCBITransTable::Karyorelict), StopOr(AA::W));
     /// ```
     #[inline]
     pub fn translate<U, V>(&self, table: &U) -> V
@@ -55,11 +87,65 @@ impl<T> Codon<T> {
         table.get(&self)
     }
 
+
+    /// Gets the translation codon tag using the mapping defined in some type
+    /// implementing [`CodonTagTable`]. The tags are related to the translation
+    /// tables, telling you whether a codon could encode a Start, or Stop, or
+    /// some other translation state.
+    ///
+    /// Note that this is equivalent to calling the [`get_tag`] method on the
+    /// object implementing [`CodonTagTable`]
+    ///
+    /// [`CodonTagTable`]: ../translate/trait.CodonTagTable.html
+    /// [`get_tag`]: ../translate/trait.CodonTagTable.html#method.get_tag
+    ///
+    /// # Examples:
+    ///
+    /// ```
+    /// use seqrs::codon::Codon;
+    /// use seqrs::alphabet::DNA::*;
+    /// use seqrs::translate::CodonTagTable;
+    /// use seqrs::translate::CodonTag;
+    /// use seqrs::translate::NCBITransTable;
+    ///
+    /// let codon = Codon(A, T, G);
+    /// assert_eq!(codon.tag(&NCBITransTable::Standard), CodonTag::Start);
+    ///
+    /// // Equivalent to this.
+    /// assert_eq!(NCBITransTable::Standard.get_tag(&Codon(A, T, G)), CodonTag::Start);
+    ///
+    /// let codon = Codon(T, A, G);
+    /// assert_eq!(codon.tag(&NCBITransTable::Standard), CodonTag::Stop);
+    ///
+    /// let codon = Codon(N, N, N);
+    /// assert_eq!(codon.tag(&NCBITransTable::Standard), CodonTag::Any);
+    /// ```
+    #[inline]
+    pub fn tag<U, V>(&self, table: &U) -> V
+        where U: CodonTagTable<Codon<T>, V>
+    {
+        table.get_tag(&self)
+    }
+
+
+    /// Converts from [`Codon<T>`] to [`Codon<&T>`].
+    ///
+    /// The [`map`] methods (and relatives) takes the `self` argument by
+    /// value, consuming the original. Use [`as_ref`] to first take a reference
+    /// to the value inside the original [`Codon`].
+    ///
+    /// [`Codon`]: struct.Codon.html
+    /// [`Codon<T>`]: struct.Codon.html
+    /// [`Codon<&T>`]: struct.Codon.html
+    /// [`map`]: #method.map
+    /// [`as_ref`]: #method.as_ref
+    ///
     /// # Examples:
     ///
     /// ```
     /// use seqrs::codon::Codon;
     ///
+    /// // Reimplement an alphabet without the Copy trait.
     /// #[derive(Debug, PartialEq, Eq)]
     /// enum NC { A, T, G, C }
     ///
@@ -67,8 +153,8 @@ impl<T> Codon<T> {
     /// let mutated = codon.as_ref().flat_map(|one, _, three| {
     ///     Codon(one, &NC::C, three)
     /// });
-    /// assert_eq!(mutated, Codon(&NC::A, &NC::C, &NC::G));
     ///
+    /// assert_eq!(mutated, Codon(&NC::A, &NC::C, &NC::G));
     /// println!("Can still print: {:?} into {:?}", codon, mutated);
     /// ```
     pub fn as_ref(&self) -> Codon<&T> {
@@ -77,6 +163,11 @@ impl<T> Codon<T> {
     }
 
 
+    /// Converts from [`Codon<T>`] to [`Codon<&mut T>`].
+    ///
+    /// [`Codon<T>`]: struct.Codon.html
+    /// [`Codon<&mut T>`]: struct.Codon.html
+    ///
     /// # Examples:
     ///
     /// ```
@@ -86,7 +177,8 @@ impl<T> Codon<T> {
     /// {
     ///     let Codon(one, two, three) = codon.as_mut();
     ///     *one = 'Z';
-    /// }
+    /// } // Mutable ref goes out of scope here
+    ///
     /// assert_eq!(codon, Codon('Z', 'T', 'G'));
     /// ```
     pub fn as_mut(&mut self) -> Codon<&mut T> {
@@ -94,16 +186,23 @@ impl<T> Codon<T> {
         Codon(one, two, three)
     }
 
+
+    /// Applies a function taking and returning a 3-tuple to the elements of
+    /// the [`Codon`] object.
+    ///
+    /// Input and output types don't have to be the same.
+    ///
+    /// [`Codon`]: struct.Codon.html
+    ///
     /// Examples:
     ///
     /// ```
     /// use seqrs::codon::Codon;
-    /// use seqrs::alphabet::DNA::*;
     ///
-    /// let codon = Codon(A, T, G);
-    /// let mapped = codon.map(|one, _, _| (one, A, A));
+    /// let codon = Codon('A', 'T', 'G');
+    /// let mapped = codon.map(|one, _, _| (one as u8, b'A', b'A'));
     ///
-    /// assert_eq!(mapped, Codon(A, A, A));
+    /// assert_eq!(mapped, Codon(b'A', b'A', b'A'));
     /// ```
     pub fn map<U, F: FnOnce(T, T, T) -> (U, U, U)>(self, f: F) -> Codon<U> {
         let Codon(one, two, three) = self;
@@ -111,34 +210,43 @@ impl<T> Codon<T> {
         Codon(one, two, three)
     }
 
+
+    /// Applies a function taking a 3-tuple and returning a [`Codon`] object
+    /// over the [`Codon`] object.
+    ///
+    /// [`Codon`]: struct.Codon.html
+    ///
     /// Examples:
     ///
     /// ```
     /// use seqrs::codon::Codon;
-    /// use seqrs::alphabet::DNA::*;
     ///
-    /// let codon = Codon(A, T, G);
-    /// let mapped: Codon<u8> = codon.flat_map(|one, two, three| {
-    ///     Codon(one.into(), two.into(), three.into())
+    /// let codon = Codon(b'A', b'T', b'G');
+    /// let mapped = codon.flat_map(|one, two, three| {
+    ///     Codon(one, two - 1, three - 2)
     /// });
     ///
-    /// assert_eq!(mapped, Codon(b'A', b'T', b'G'));
+    /// assert_eq!(mapped, Codon(b'A', b'S', b'E'));
     /// ```
     pub fn flat_map<U, F: FnOnce(T, T, T) -> Codon<U>>(self, f: F) -> Codon<U> {
         let Codon(one, two, three) = self;
         f(one, two, three)
     }
 
+
+    /// Applies a function over each of the [`Codon`] bases individually.
+    ///
+    /// [`Codon`]: struct.Codon.html
+    ///
     /// Examples:
     ///
     /// ```
     /// use seqrs::codon::Codon;
-    /// use seqrs::alphabet::DNA::*;
     ///
-    /// let codon = Codon(A, T, G);
-    /// let mapped: Codon<u8> = codon.map_each(|b| b.into());
+    /// let codon = Codon('A', 'T', 'G');
+    /// let mapped: Codon<u8> = codon.map_each(|b| b.to_ascii_lowercase() as u8);
     ///
-    /// assert_eq!(mapped, Codon(b'A', b'T', b'G'));
+    /// assert_eq!(mapped, Codon(b'a', b't', b'g'));
     /// ```
     pub fn map_each<U, F: Fn(T) -> U>(self, f: F) -> Codon<U> {
         let Codon(one, two, three) = self;
@@ -148,6 +256,7 @@ impl<T> Codon<T> {
 
 
 impl<T: Default> Default for Codon<T> {
+
     /// Returns codon with contained types defaults.
     ///
     /// Examples:
@@ -183,6 +292,7 @@ impl<T> FromStr for Codon<T>
 }
 
 
+/// Yields a iterator over elements wrapped in [`Codon`].
 pub trait Codons<I> {
     type Item;
     type Iter;
@@ -204,6 +314,7 @@ impl<I, T, U> Codons<I> for U
 }
 
 
+/// An iterator over 
 #[derive(Debug, Clone)]
 pub struct CodonsIterator<I> {
     iter: I,
@@ -229,24 +340,22 @@ impl<I, T> Iterator for CodonsIterator<I>
     /// # Examples:
     ///
     /// ```
-    /// use seqrs::alphabet::DNA;
-    /// use seqrs::alphabet::DNA::*;
     /// use seqrs::codon::Codon;
     /// use seqrs::codon::Codons;
     ///
-    /// let seq = vec![A, A].codons();
+    /// let seq = vec!['A', 'A'].codons();
     /// assert_eq!((0, Some(0)), seq.size_hint());
     ///
-    /// let seq = vec![A, A, A].codons();
+    /// let seq = vec!['A', 'A', 'A'].codons();
     /// assert_eq!((1, Some(1)), seq.size_hint());
     ///
-    /// let seq = vec![A, A, A, A].codons();
+    /// let seq = vec!['A', 'A', 'A', 'A'].codons();
     /// assert_eq!((1, Some(1)), seq.size_hint());
     ///
-    /// let seq = vec![A, A, A, A, A].codons();
+    /// let seq = vec!['A', 'A', 'A', 'A', 'A'].codons();
     /// assert_eq!((1, Some(1)), seq.size_hint());
     ///
-    /// let seq = vec![A, A, A, A, A, A].codons();
+    /// let seq = vec!['A', 'A', 'A', 'A', 'A', 'A'].codons();
     /// assert_eq!((2, Some(2)), seq.size_hint());
     /// ```
     #[inline]
@@ -300,7 +409,7 @@ mod tests {
     use alphabet::DNA::*;
     use translate::NCBITransTable;
     use stopped::Stopped;
-    use stopped::Stopped::Res;
+    use stopped::Stopped::{Res, Stop};
     use alphabet::AA;
 
 
@@ -358,12 +467,12 @@ mod tests {
 
     #[test]
     fn test_translate_arr() {
-        let arr = vec![Codon(A, T, G), Codon(C, T, C)];
+        let arr = vec![Codon(A, T, G), Codon(C, T, C), Codon(T, A, G)];
         let mapped: Vec<Stopped<AA>> = arr
             .iter()
             .map(|c| c.translate(&NCBITransTable::Standard))
             .collect();
-        assert_eq!(mapped, vec![Res(AA::M), Res(AA::L)]);
+        assert_eq!(mapped, vec![Res(AA::M), Res(AA::L), Stop]);
     }
 }
 
