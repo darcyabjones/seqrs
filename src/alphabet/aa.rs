@@ -5,167 +5,113 @@ use crate::errors::{SeqError, SeqErrorKind};
 use std::convert::TryFrom;
 
 
-alphabet! {
-    #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Copy, Clone)]
-    pub enum AA {
-        A = {
-            chr: b'A',
-            name: "Alanine",
-            matches: [X],
-            is_iupac: true,
-        };
-        B = {
-            chr: b'B',
-            name: "Aspartic acid or Asparagine",
-            matches: [D, N, X],
-            is_iupac: true,
-        };
-        C = {
-            chr: b'C',
-            name: "Cysteine",
-            matches: [X],
-            is_iupac: true,
-        };
-        D = {
-            chr: b'D',
-            name: "Aspartic acid",
-            matches: [X],
-            is_iupac: true,
-        };
-        E = {
-            chr: b'E',
-            name: "Glutamic acid",
-            matches: [X],
-            is_iupac: true,
-        };
-        F = {
-            chr: b'F',
-            name: "Phenylalanine",
-            matches: [X],
-            is_iupac: true,
-        };
-        G = {
-            chr: b'G',
-            name: "Glycine",
-            matches: [X],
-            is_iupac: true,
-        };
-        H = {
-            chr: b'H',
-            name: "Histidine",
-            matches: [X],
-            is_iupac: true,
-        };
-        I = {
-            chr: b'I',
-            name: "Isoleucine",
-            matches: [X],
-            is_iupac: true,
-        };
-        J = { // Used by mascot
-            chr: b'J',
-            name: "Isoleucine or Leucine",
-            matches: [I, L, X],
-            is_iupac: false,
-        };
-        K = {
-            chr: b'K',
-            name: "Lysine",
-            matches: [X],
-            is_iupac: true,
-        };
-        L = {
-            chr: b'L',
-            name: "Leucine",
-            matches: [X],
-            is_iupac: true,
-        };
-        M = {
-            chr: b'M',
-            name: "Methionine",
-            matches: [X],
-            is_iupac: true,
-        };
-        N = {
-            chr: b'N',
-            name: "Asparagine",
-            matches: [X],
-            is_iupac: true,
-        };
-        O = {
-            chr: b'O',
-            name: "Pyroleucine",
-            matches: [X],
-            is_iupac: false,
-        };
-        P = {
-            chr: b'P',
-            name: "Proline",
-            matches: [X],
-            is_iupac: true,
-        };
-        Q = {
-            chr: b'Q',
-            name: "Glutamine",
-            matches: [X],
-            is_iupac: true,
-        };
-        R = {
-            chr: b'R',
-            name: "Arginine",
-            matches: [X],
-            is_iupac: true,
-        };
-        S = {
-            chr: b'S',
-            name: "Serine",
-            matches: [X],
-            is_iupac: true,
-        };
-        T = {
-            chr: b'T',
-            name: "Threonine",
-            matches: [X],
-            is_iupac: true,
-        };
-        U = {
-            chr: b'U',
-            name: "Selenocysteine",
-            matches: [X],
-            is_iupac: false,
-        };
-        V = {
-            chr: b'V',
-            name: "Valine",
-            matches: [X],
-            is_iupac: true,
-        };
-        W = {
-            chr: b'W',
-            name: "Tryptophan",
-            matches: [X],
-            is_iupac: true,
-        };
-        X = {
-            chr: b'X',
-            name: "Any amino acid",
-            matches: [A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, Y, Z],
-            is_iupac: true,
-        };
-        Y = {
-            chr: b'Y',
-            name: "Tyrosine",
-            matches: [X],
-            is_iupac: true,
-        };
-        Z = {
-            chr: b'Z',
-            name: "Glutamine or Glutamic acid",
-            matches: [E, Q, X],
-            is_iupac: true,
-        };
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub enum AA {
+    A,
+    B,
+    C,
+    D,
+    E,
+    F,
+    G,
+    H,
+    I,
+    J,
+    K,
+    L,
+    M,
+    N,
+    O,
+    P,
+    Q,
+    R,
+    S,
+    T,
+    U,
+    V,
+    W,
+    X,
+    Y,
+    Z,
+}
+
+
+impl AA {
+    pub fn variants() -> Vec<Self> {
+        vec![AA::A, AA::B, AA::C, AA::D, AA::E, AA::F,
+             AA::G, AA::H, AA::I, AA::J, AA::K, AA::L,
+             AA::M, AA::N, AA::O, AA::P, AA::Q, AA::R,
+             AA::S, AA::T, AA::U, AA::V, AA::W, AA::X,
+             AA::Y, AA::Z]
+    }
+
+    pub fn cardinality() -> usize {
+        Self::variants().len()
+    }
+
+    pub fn is_iupac(&self) -> bool {
+        match &self {
+            AA::A => true,
+            AA::B => true,
+            AA::C => true,
+            AA::D => true,
+            AA::E => true,
+            AA::F => true,
+            AA::G => true,
+            AA::H => true,
+            AA::I => true,
+            AA::J => false,
+            AA::K => true,
+            AA::L => true,
+            AA::M => true,
+            AA::N => true,
+            AA::O => false,
+            AA::P => true,
+            AA::Q => true,
+            AA::R => true,
+            AA::S => true,
+            AA::T => true,
+            AA::U => false,
+            AA::V => true,
+            AA::W => true,
+            AA::X => true,
+            AA::Y => true,
+            AA::Z => true,
+        }
+    }
+
+    pub fn name(&self) -> String {
+        match &self {
+            AA::A => String::from("Alanine"),
+            AA::B => String::from("Aspartic acid or Asparagine"),
+            AA::C => String::from("Cysteine"),
+            AA::D => String::from("Aspartic acid"),
+            AA::E => String::from("Glutamic acid"),
+            AA::F => String::from("Phenylalanine"),
+            AA::G => String::from("Glycine"),
+            AA::H => String::from("Histidine"),
+            AA::I => String::from("Isoleucine"),
+            AA::J => String::from("Isoleucine or Leucine"),
+            AA::K => String::from("Lysine"),
+            AA::L => String::from("Leucine"),
+            AA::M => String::from("Methionine"),
+            AA::N => String::from("Asparagine"),
+            AA::O => String::from("Pyroleucine"),
+            AA::P => String::from("Proline"),
+            AA::Q => String::from("Glutamine"),
+            AA::R => String::from("Arginine"),
+            AA::S => String::from("Serine"),
+            AA::T => String::from("Threonine"),
+            AA::U => String::from("Selenocysteine"),
+            AA::V => String::from("Valine"),
+            AA::W => String::from("Tryptophan"),
+            AA::X => String::from("Any amino acid"),
+            AA::Y => String::from("Tyrosine"),
+            AA::Z => String::from("Glutamine or Glutamic acid"),
+        }
     }
 }
+
 
 impl Default for AA {
     /// Returns [`X`][AA::X].
@@ -173,149 +119,200 @@ impl Default for AA {
     fn default() -> Self { AA::X }
 }
 
+
+impl TryFrom<&u8> for AA {
+    type Error = SeqError;
+    fn try_from(base: &u8) -> Result<Self, Self::Error> {
+        match base.to_ascii_uppercase() {
+            b'A' => Ok(AA::A),
+            b'B' => Ok(AA::B),
+            b'C' => Ok(AA::C),
+            b'D' => Ok(AA::D),
+            b'E' => Ok(AA::E),
+            b'F' => Ok(AA::F),
+            b'G' => Ok(AA::G),
+            b'H' => Ok(AA::H),
+            b'I' => Ok(AA::I),
+            b'J' => Ok(AA::J),
+            b'K' => Ok(AA::K),
+            b'L' => Ok(AA::L),
+            b'M' => Ok(AA::M),
+            b'N' => Ok(AA::N),
+            b'O' => Ok(AA::O),
+            b'P' => Ok(AA::P),
+            b'Q' => Ok(AA::Q),
+            b'R' => Ok(AA::R),
+            b'S' => Ok(AA::S),
+            b'T' => Ok(AA::T),
+            b'U' => Ok(AA::U),
+            b'V' => Ok(AA::V),
+            b'W' => Ok(AA::W),
+            b'X' => Ok(AA::X),
+            b'Y' => Ok(AA::Y),
+            b'Z' => Ok(AA::Z),
+            b => Err(SeqErrorKind::AlphabetReadError { base: b as char }.into()),
+        }
+    }
+}
+
+
+impl TryFrom<u8> for AA {
+    type Error = SeqError;
+    fn try_from(base: u8) -> Result<Self, Self::Error> {
+        Self::try_from(&(base))
+    }
+}
+
+
+impl TryFrom<&char> for AA {
+    type Error = SeqError;
+    fn try_from(base: &char) -> Result<Self, Self::Error> {
+        crate::utils::char_to_byte(base).and_then(|b| Self::try_from(&b))
+    }
+}
+
+
+impl TryFrom<char> for AA {
+    type Error = SeqError;
+    fn try_from(base: char) -> Result<Self, Self::Error> {
+        crate::utils::char_to_byte(&base).and_then(|b| Self::try_from(&b))
+    }
+}
+
+
+impl From<&AA> for u8 {
+    fn from(base: &AA) -> Self {
+        match base {
+            AA::A => b'A',
+            AA::B => b'B',
+            AA::C => b'C',
+            AA::D => b'D',
+            AA::E => b'E',
+            AA::F => b'F',
+            AA::G => b'G',
+            AA::H => b'H',
+            AA::I => b'I',
+            AA::J => b'J',
+            AA::K => b'K',
+            AA::L => b'L',
+            AA::M => b'M',
+            AA::N => b'N',
+            AA::O => b'O',
+            AA::P => b'P',
+            AA::Q => b'Q',
+            AA::R => b'R',
+            AA::S => b'S',
+            AA::T => b'T',
+            AA::U => b'U',
+            AA::V => b'V',
+            AA::W => b'W',
+            AA::X => b'X',
+            AA::Y => b'Y',
+            AA::Z => b'Z',
+        }
+    }
+}
+
+
+impl From<AA> for u8 {
+    fn from(base: AA) -> Self { (&base).into() }
+}
+
+
+impl From<&AA> for char {
+    fn from(base: &AA) -> Self { u8::from(base) as char }
+}
+
+
+impl From<AA> for char {
+    fn from(base: AA) -> Self { u8::from(&base) as char }
+}
+
+
+impl std::fmt::Display for AA {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}", char::from(self))
+    }
+}
+
+
+impl Match<AA> for AA {
+    fn matches(&self, other: &AA) -> bool {
+        match (&self, &other) {
+            (    _, AA::X) => true,
+            (AA::X, _    ) => true,
+            (AA::B, AA::D) => true,
+            (AA::B, AA::N) => true,
+            (AA::D, AA::B) => true,
+            (AA::N, AA::B) => true,
+            (AA::J, AA::I) => true,
+            (AA::J, AA::L) => true,
+            (AA::I, AA::J) => true,
+            (AA::L, AA::J) => true,
+            (AA::Z, AA::E) => true,
+            (AA::Z, AA::Q) => true,
+            (AA::E, AA::Z) => true,
+            (AA::Q, AA::Z) => true,
+            (    a,     b) => a == b,
+        }
+    }
+}
+
+
 impl RedundantAlphabet for AA {
+
     fn union(&self, other: &Self) -> Self {
         match (self, other) {
-            (   AA::A,    AA::A) => AA::A,
-            (   AA::B,    AA::B) => AA::B,
-            (   AA::B,    AA::D) => AA::B,
-            (   AA::B,    AA::N) => AA::B,
-            (   AA::C,    AA::C) => AA::C,
-            (   AA::D,    AA::B) => AA::B,
-            (   AA::D,    AA::D) => AA::D,
-            (   AA::D,    AA::N) => AA::B,
-            (   AA::E,    AA::E) => AA::E,
-            (   AA::E,    AA::Q) => AA::Z,
-            (   AA::E,    AA::Z) => AA::Z,
-            (   AA::F,    AA::F) => AA::F,
-            (   AA::G,    AA::G) => AA::G,
-            (   AA::H,    AA::H) => AA::H,
-            (   AA::I,    AA::I) => AA::I,
-            (   AA::I,    AA::J) => AA::J,
-            (   AA::I,    AA::L) => AA::J,
-            (   AA::J,    AA::I) => AA::J,
-            (   AA::J,    AA::J) => AA::J,
-            (   AA::J,    AA::L) => AA::J,
-            (   AA::K,    AA::K) => AA::K,
-            (   AA::L,    AA::I) => AA::J,
-            (   AA::L,    AA::J) => AA::J,
-            (   AA::L,    AA::L) => AA::L,
-            (   AA::M,    AA::M) => AA::M,
-            (   AA::N,    AA::B) => AA::B,
-            (   AA::N,    AA::D) => AA::B,
-            (   AA::N,    AA::N) => AA::N,
-            (   AA::O,    AA::O) => AA::O,
-            (   AA::P,    AA::P) => AA::P,
-            (   AA::Q,    AA::E) => AA::Z,
-            (   AA::Q,    AA::Q) => AA::Q,
-            (   AA::Q,    AA::Z) => AA::Z,
-            (   AA::R,    AA::R) => AA::R,
-            (   AA::S,    AA::S) => AA::S,
-            (   AA::T,    AA::T) => AA::T,
-            (   AA::U,    AA::U) => AA::U,
-            (   AA::V,    AA::V) => AA::V,
-            (   AA::W,    AA::W) => AA::W,
-            (   AA::Y,    AA::Y) => AA::Y,
-            (   AA::Z,    AA::E) => AA::Z,
-            (   AA::Z,    AA::Q) => AA::Z,
-            (   AA::Z,    AA::Z) => AA::Z,
-            (       _,        _) => AA::X,
+            (a, b) if a == b => *a,
+            (AA::N, AA::D)   => AA::B,
+            (AA::D, AA::N)   => AA::B,
+            (AA::L, AA::I)   => AA::J,
+            (AA::I, AA::L)   => AA::J,
+            (AA::Q, AA::E)   => AA::Z,
+            (AA::E, AA::Q)   => AA::Z,
+            _                => AA::X,
         }
     }
 
     fn intersection(&self, other: &Self) -> Option<Self> {
         match (self, other) {
-            (   AA::A,    AA::A) => Some(AA::A),
-            (   AA::B,    AA::B) => Some(AA::B),
-            (   AA::B,    AA::D) => Some(AA::D),
-            (   AA::B,    AA::N) => Some(AA::N),
-            (   AA::C,    AA::C) => Some(AA::C),
-            (   AA::D,    AA::B) => Some(AA::D),
-            (   AA::D,    AA::D) => Some(AA::D),
-            (   AA::D,    AA::N) => None,
-            (   AA::E,    AA::E) => Some(AA::E),
-            (   AA::E,    AA::Q) => None,
-            (   AA::E,    AA::Z) => Some(AA::E),
-            (   AA::F,    AA::F) => Some(AA::F),
-            (   AA::G,    AA::G) => Some(AA::G),
-            (   AA::H,    AA::H) => Some(AA::H),
-            (   AA::I,    AA::I) => Some(AA::I),
-            (   AA::I,    AA::J) => Some(AA::I),
-            (   AA::I,    AA::L) => None,
-            (   AA::J,    AA::I) => Some(AA::I),
-            (   AA::J,    AA::J) => Some(AA::J),
-            (   AA::J,    AA::L) => Some(AA::L),
-            (   AA::K,    AA::K) => Some(AA::K),
-            (   AA::L,    AA::I) => None,
-            (   AA::L,    AA::J) => Some(AA::L),
-            (   AA::L,    AA::L) => Some(AA::L),
-            (   AA::M,    AA::M) => Some(AA::M),
-            (   AA::N,    AA::B) => Some(AA::N),
-            (   AA::N,    AA::D) => None,
-            (   AA::N,    AA::N) => Some(AA::N),
-            (   AA::O,    AA::O) => Some(AA::O),
-            (   AA::P,    AA::P) => Some(AA::P),
-            (   AA::Q,    AA::E) => None,
-            (   AA::Q,    AA::Q) => Some(AA::Q),
-            (   AA::Q,    AA::Z) => Some(AA::Q),
-            (   AA::R,    AA::R) => Some(AA::R),
-            (   AA::S,    AA::S) => Some(AA::S),
-            (   AA::T,    AA::T) => Some(AA::T),
-            (   AA::U,    AA::U) => Some(AA::U),
-            (   AA::V,    AA::V) => Some(AA::V),
-            (   AA::W,    AA::W) => Some(AA::W),
-            (   AA::X,        a) => Some(*a),
-            (       a,    AA::X) => Some(*a),
-            (   AA::Y,    AA::Y) => Some(AA::Y),
-            (   AA::Z,    AA::E) => Some(AA::E),
-            (   AA::Z,    AA::Q) => Some(AA::Q),
-            (   AA::Z,    AA::Z) => Some(AA::Z),
-            (       _,        _) => None,
+            (a, b) if a == b => Some(*a),
+            (AA::X,     b)   => Some(*b),
+            (a,     AA::X)   => Some(*a),
+            (AA::B, AA::D)   => Some(AA::D),
+            (AA::B, AA::N)   => Some(AA::N),
+            (AA::D, AA::B)   => Some(AA::D),
+            (AA::N, AA::B)   => Some(AA::N),
+            (AA::J, AA::I)   => Some(AA::I),
+            (AA::J, AA::L)   => Some(AA::L),
+            (AA::I, AA::J)   => Some(AA::I),
+            (AA::L, AA::J)   => Some(AA::L),
+            (AA::Z, AA::E)   => Some(AA::E),
+            (AA::Z, AA::Q)   => Some(AA::Q),
+            (AA::E, AA::Z)   => Some(AA::E),
+            (AA::Q, AA::Z)   => Some(AA::Q),
+            _                => None,
         }
     }
 
     fn difference(&self, other: &Self) -> Option<Self> {
         match (self, other) {
-            (       _,    AA::X) => None,
-            (   AA::A,    AA::A) => None,
-            (   AA::B,    AA::B) => None,
-            (   AA::B,    AA::D) => Some(AA::N),
-            (   AA::B,    AA::N) => Some(AA::D),
-            (   AA::C,    AA::C) => None,
-            (   AA::D,    AA::B) => None,
-            (   AA::D,    AA::D) => None,
-            (   AA::E,    AA::E) => None,
-            (   AA::E,    AA::Z) => None,
-            (   AA::F,    AA::F) => None,
-            (   AA::G,    AA::G) => None,
-            (   AA::H,    AA::H) => None,
-            (   AA::I,    AA::I) => None,
-            (   AA::I,    AA::J) => None,
-            (   AA::J,    AA::I) => Some(AA::L),
-            (   AA::J,    AA::J) => None,
-            (   AA::J,    AA::L) => Some(AA::I),
-            (   AA::K,    AA::K) => None,
-            (   AA::L,    AA::J) => None,
-            (   AA::L,    AA::L) => None,
-            (   AA::M,    AA::M) => None,
-            (   AA::N,    AA::B) => None,
-            (   AA::N,    AA::N) => None,
-            (   AA::O,    AA::O) => None,
-            (   AA::P,    AA::P) => None,
-            (   AA::Q,    AA::Q) => None,
-            (   AA::Q,    AA::Z) => None,
-            (   AA::R,    AA::R) => None,
-            (   AA::S,    AA::S) => None,
-            (   AA::T,    AA::T) => None,
-            (   AA::U,    AA::U) => None,
-            (   AA::V,    AA::V) => None,
-            (   AA::W,    AA::W) => None,
-            (   AA::X,        _) => Some(AA::X),
-            (   AA::Y,    AA::Y) => None,
-            (   AA::Z,    AA::E) => Some(AA::Q),
-            (   AA::Z,    AA::Q) => Some(AA::E),
-            (   AA::Z,    AA::Z) => None,
-            (       a,        _) => Some(*a),
+            (a, b) if a == b => None,
+            (_,     AA::X)   => None,
+            (AA::X, _    )   => Some(AA::X),
+            (AA::B, AA::D)   => Some(AA::N),
+            (AA::B, AA::N)   => Some(AA::D),
+            (AA::D, AA::B)   => None,
+            (AA::N, AA::B)   => None,
+            (AA::J, AA::I)   => Some(AA::L),
+            (AA::J, AA::L)   => Some(AA::I),
+            (AA::I, AA::J)   => Some(AA::L),
+            (AA::L, AA::J)   => Some(AA::I),
+            (AA::Z, AA::E)   => Some(AA::Q),
+            (AA::Z, AA::Q)   => Some(AA::E),
+            (AA::E, AA::Z)   => Some(AA::Q),
+            (AA::Q, AA::Z)   => Some(AA::E),
+            (a,         _)   => Some(*a),
         }
     }
 
@@ -326,6 +323,7 @@ impl RedundantAlphabet for AA {
         }
     }
 }
+
 
 #[cfg(test)]
 mod tests {
