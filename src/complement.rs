@@ -1,45 +1,98 @@
+//! Trait for nucleic acid complementation and a generalised reverse complement
+//! iterator over sequences.
+//!
+//! # Examples:
+//!
+//! ```
+//! use seqrs::complement::{Complement, IntoReverseComplement};
+//!
+//! #[derive(Debug, Copy, Clone, PartialEq)]
+//! pub enum DNA {A, T, G, C};
+//!
+//! impl Complement for &DNA {
+//!     type Compl = DNA;
+//!     fn complement(self) -> Self::Compl {
+//!         match self {
+//!             DNA::A => DNA::T,
+//!             DNA::T => DNA::A,
+//!             DNA::G => DNA::C,
+//!             DNA::C => DNA::G,
+//!         }
+//!     }
+//! }
+//!
+//! impl Complement for DNA {
+//!     type Compl = DNA;
+//!
+//!     fn complement(self) -> Self::Compl {
+//!         (&self).complement()
+//!     }
+//! }
+//!
+//! assert_eq!(DNA::A.complement(), DNA::T);
+//!
+//! // Any type that implements `IntoIterator` and `DoubleEndedIterator`
+//! // automatically implements `ReverseComplement` if the type it contains
+//! // implements `Complement`.
+//! let seq = vec![DNA::A, DNA::T, DNA::G, DNA::C];
+//! let rc: Vec<DNA> = seq.into_iter().reverse_complement().collect();
+//!
+//! assert_eq!(rc, vec![DNA::G, DNA::C, DNA::A, DNA::T]);
+//! // Notice that collect is used, so the iterator is lazy, and won't perform
+//! // any real work until used.
+//!
+//! // `reverse_complement` takes ownership of the object, so if you
+//! // want to use `seq` again, first call `iter()`.
+//!
+//! // println!("{:?}", seq); // would panic.
+//!
+//! let seq = vec![DNA::A, DNA::T, DNA::G, DNA::C];
+//! let rc: Vec<DNA> = seq.iter().reverse_complement().collect();
+//!
+//! assert_eq!(rc, vec![DNA::G, DNA::C, DNA::A, DNA::T]);
+//! println!("{:?}", seq);
+//! ```
+
 use std::ops::Try;
 
 
 pub trait Complement {
-    fn complement(&self) -> Self;
+    type Compl;
+    fn complement(self) -> Self::Compl;
 }
 
 
-pub trait ReverseComplement<I> {
-    type Item;
+pub trait IntoReverseComplement: Sized {
     type Iter;
 
-    fn reverse_complement(self) -> ReverseComplementIterator<I>;
-}
-
-
-impl<I, T, U> ReverseComplement<I> for U
-    where U: IntoIterator<Item=T, IntoIter=I>,
-          T: Complement,
-          I: DoubleEndedIterator<Item=T>,
-{
-    type Item = T;
-    type Iter = I;
-
-    fn reverse_complement(self) -> ReverseComplementIterator<I> {
-        ReverseComplementIterator {iter: self.into_iter() }
-    }
+    fn reverse_complement(self) -> ReverseComplement<Self>;
 }
 
 
 /// A wrapper around map and rev.
 #[derive(Debug, Clone)]
-pub struct ReverseComplementIterator<I> {
+pub struct ReverseComplement<I> {
     iter: I,
 }
 
 
-impl<I, T> Iterator for ReverseComplementIterator<I>
+impl<I, T> IntoReverseComplement for I
+    where T: Complement,
+          I: DoubleEndedIterator<Item=T>,
+{
+    type Iter = I;
+
+    fn reverse_complement(self) -> ReverseComplement<Self> {
+        ReverseComplement { iter: self }
+    }
+}
+
+
+impl<I, T> Iterator for ReverseComplement<I>
     where I: DoubleEndedIterator<Item=T>,
           T: Complement,
 {
-    type Item = T;
+    type Item = <T as Complement>::Compl;
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
@@ -66,12 +119,12 @@ impl<I, T> Iterator for ReverseComplementIterator<I>
 }
 
 
-impl<I, T> DoubleEndedIterator for ReverseComplementIterator<I>
+impl<'a, I, T> DoubleEndedIterator for ReverseComplement<I>
     where I: DoubleEndedIterator<Item=T>,
           T: Complement,
 {
     #[inline]
-    fn next_back(&mut self) -> Option<<I as Iterator>::Item> {
+    fn next_back(&mut self) -> Option<<T as Complement>::Compl> {
         self.iter.next().map(|b| b.complement())
     }
 
@@ -90,7 +143,7 @@ impl<I, T> DoubleEndedIterator for ReverseComplementIterator<I>
 }
 
 
-impl<I, T> ExactSizeIterator for ReverseComplementIterator<I>
+impl<I, T> ExactSizeIterator for ReverseComplement<I>
     where I: ExactSizeIterator<Item=T> + DoubleEndedIterator<Item=T>,
           T: Complement,
 {

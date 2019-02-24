@@ -192,11 +192,19 @@ macro_rules! alphabet {
             };)*
         }
     ) => {
-        impl Complement for $name {
-            fn complement(&self) -> Self {
-                match &self {
+        impl Complement for &$name {
+            type Compl = $name;
+            fn complement(self) -> Self::Compl {
+                match self {
                     $($name::$variant => $name::$compl,)*
                 }
+            }
+        }
+
+        impl Complement for $name {
+            type Compl = $name;
+            fn complement(self) -> Self::Compl {
+                (&self).complement()
             }
         }
 
@@ -310,7 +318,7 @@ macro_rules! alphabet {
     };
 }
 
-
+/*
 #[cfg(test)]
 mod tests {
     use matcher::Match;
@@ -368,4 +376,4 @@ mod tests {
         assert_eq!(DNA::G, DNA::G);
         assert_eq!(DNA::C, DNA::C);
     }
-}
+}*/

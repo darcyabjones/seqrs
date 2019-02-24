@@ -1,10 +1,12 @@
 /// A fully redundant DNA alphabet.
 
-use errors::{SeqError, SeqErrorKind};
-use complement::Complement;
-use matcher::{Match, RedundantAlphabet};
+use crate::errors::{SeqError, SeqErrorKind};
+use crate::complement::Complement;
+use crate::matcher::{Match, RedundantAlphabet};
+use crate::gapped::Gapped;
 
 use std::convert::TryFrom;
+
 
 alphabet! {
     #[repr(u8)]
@@ -117,6 +119,7 @@ alphabet! {
         };
     }
 }
+
 
 impl Default for DNA {
     /// Returns [`N`][DNA::N].
@@ -802,19 +805,76 @@ impl RedundantAlphabet for DNA {
     }
 }
 
+
+impl Complement for &Gapped<DNA> {
+    type Compl = Gapped<DNA>;
+    fn complement(self) -> Self::Compl {
+        self.map(|a| a.complement())
+    }
+}
+
+
+impl Complement for Gapped<DNA> {
+    type Compl = Gapped<DNA>;
+    fn complement(self) -> Self::Compl {
+        (&self).complement()
+    }
+}
+
+
+impl Complement for Gapped<&DNA> {
+    type Compl = Gapped<DNA>;
+    fn complement(self) -> Self::Compl {
+        self.map(|a| a.complement())
+    }
+}
+
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use test::{Bencher, black_box};
+    use proptest::{proptest, proptest_helper};
     use proptest::prelude::any;
     use proptest::sample::select;
-    use complement::ReverseComplement;
+    use crate::complement::IntoReverseComplement;
+    use crate::gapped::Gapped;
 
     #[test]
     fn test_complement_vec() {
         let d = vec![DNA::A, DNA::T, DNA::G, DNA::C];
-        let c: Vec<DNA> = d.reverse_complement().rev().collect();
-        assert_eq!(c, vec![DNA::T, DNA::A, DNA::C, DNA::G]);
+        let c: Vec<DNA> = d.into_iter().reverse_complement().collect();
+        assert_eq!(c, vec![DNA::G, DNA::C, DNA::A, DNA::T]);
+
+        let d = vec![DNA::A, DNA::T, DNA::G, DNA::C];
+        let c: Vec<DNA> = d.iter().reverse_complement().collect();
+        assert_eq!(c, vec![DNA::G, DNA::C, DNA::A, DNA::T]);
+    }
+
+    #[test]
+    fn test_gapped_complement() {
+        use crate::gapped::Gapped::{Base, Gap};
+
+        assert_eq!(Gap::<DNA>.complement(), Gap);
+        assert_eq!(Base(DNA::T).complement(), Base(DNA::A));
+
+        assert_eq!(Base(&DNA::T).complement(), Base(DNA::A));
+        assert_eq!((&Base(DNA::T)).complement(), Base(DNA::A));
+
+        assert_eq!((&Base(&DNA::T)).complement(), Base(DNA::A));
+    }
+
+    #[test]
+    fn test_gapped_complement_iter() {
+        use crate::gapped::Gapped::{Base, Gap};
+
+        let seq = vec![Base(DNA::A), Base(DNA::T), Gap, Base(DNA::G)];
+        let comp: Vec<Gapped<DNA>> = seq.into_iter().reverse_complement().collect();
+        assert_eq!(comp, vec![Base(DNA::C), Gap, Base(DNA::A), Base(DNA::T)]);
+
+        let seq = vec![Base(DNA::A), Base(DNA::T), Gap, Base(DNA::G)];
+        let comp: Vec<Gapped<DNA>> = seq.iter().reverse_complement().collect();
+        assert_eq!(comp, vec![Base(DNA::C), Gap, Base(DNA::A), Base(DNA::T)]);
     }
 
     #[test]
@@ -1024,5 +1084,4 @@ mod tests {
             }
         })
     }
-
 }

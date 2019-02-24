@@ -1,8 +1,8 @@
 /// A generalised codon alphabet.
 
-use translate::TranslationTable;
-use translate::CodonTagTable;
-use errors::{SeqError, SeqErrorKind};
+use crate::translate::TranslationTable;
+use crate::translate::CodonTagTable;
+use crate::errors::{SeqError, SeqErrorKind};
 
 use std::convert::{TryFrom, TryInto};
 use std::str::FromStr;
@@ -81,10 +81,10 @@ impl<T> Codon<T> {
     /// assert_eq!(codon.translate(&NCBITransTable::Karyorelict), StopOr(AA::W));
     /// ```
     #[inline]
-    pub fn translate<U, V>(&self, table: &U) -> V
-        where U: TranslationTable<Codon<T>, V>
+    pub fn translate<'a, U, V>(&'a self, table: &U) -> V
+        where U: TranslationTable<&'a Codon<T>, V>
     {
-        table.get(&self)
+        table.get(self)
     }
 
 
@@ -104,8 +104,8 @@ impl<T> Codon<T> {
     /// ```
     /// use seqrs::codon::Codon;
     /// use seqrs::alphabet::DNA::*;
+    /// use seqrs::alphabet::CodonTag;
     /// use seqrs::translate::CodonTagTable;
-    /// use seqrs::translate::CodonTag;
     /// use seqrs::translate::NCBITransTable;
     ///
     /// let codon = Codon(A, T, G);
@@ -121,10 +121,10 @@ impl<T> Codon<T> {
     /// assert_eq!(codon.tag(&NCBITransTable::Standard), CodonTag::Any);
     /// ```
     #[inline]
-    pub fn tag<U, V>(&self, table: &U) -> V
-        where U: CodonTagTable<Codon<T>, V>
+    pub fn tag<'a, U, V>(&'a self, table: &U) -> V
+        where U: CodonTagTable<&'a Codon<T>, V>
     {
-        table.get_tag(&self)
+        table.get_tag(self)
     }
 
 
@@ -314,7 +314,7 @@ impl<I, T, U> Codons<I> for U
 }
 
 
-/// An iterator over 
+/// An iterator over
 #[derive(Debug, Clone)]
 pub struct CodonsIterator<I> {
     iter: I,
@@ -405,12 +405,12 @@ impl<I, T> ExactSizeIterator for CodonsIterator<I>
 #[cfg(test)]
 mod tests {
     use super::*;
-    use alphabet::DNA;
-    use alphabet::DNA::*;
-    use translate::NCBITransTable;
-    use stopped::Stopped;
-    use stopped::Stopped::{Res, Stop};
-    use alphabet::AA;
+    use crate::alphabet::DNA;
+    use crate::alphabet::DNA::*;
+    use crate::translate::NCBITransTable;
+    use crate::stopped::Stopped;
+    use crate::stopped::Stopped::{Res, Stop};
+    use crate::alphabet::AA;
 
 
     #[test]

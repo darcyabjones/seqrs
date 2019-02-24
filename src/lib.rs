@@ -2,13 +2,9 @@
 #![feature(try_trait)]
 #![feature(test)]
 #![feature(try_from)]
+
 extern crate test;
 
-extern crate failure;
-
-#[cfg(test)]
-#[macro_use]
-extern crate proptest;
 
 pub mod utils;
 

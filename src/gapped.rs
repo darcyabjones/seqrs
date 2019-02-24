@@ -4,8 +4,6 @@
 //! the base in a tuple struct.
 //!
 
-use complement::Complement;
-
 use std::convert::TryFrom;
 use std::fmt;
 
@@ -674,15 +672,6 @@ impl<T> fmt::Display for Gapped<T>
 }
 
 
-/// Complement is implemented for any wrapped type that also implements
-/// complement. A gap is always it's own complement.
-impl<T: Complement> Complement for Gapped<T> {
-    fn complement(&self) -> Self {
-        self.as_ref().map(|a| a.complement())
-    }
-}
-
-
 #[cfg(test)]
 mod tests {
     //! Testing gaps.
@@ -690,7 +679,10 @@ mod tests {
     //! get rid of.
 
     use super::*;
-    use alphabet::DNA;
+    use super::Gapped::*;
+    use crate::alphabet::DNA;
+
+    use std::convert::TryInto;
 
     #[test]
     fn test_from() {
@@ -718,9 +710,16 @@ mod tests {
     }
 
     #[test]
-    fn test_complement() {
-        assert_eq!(Gapped::Gap::<DNA>.complement(), Gapped::Gap);
-        assert_eq!(Gapped::Base(DNA::T).complement(), Gapped::Base(DNA::A));
+    fn test_from_iter() {
+        let seq: Result<Vec<Gapped<DNA>>, _> = "ATG-N".bytes()
+            .map(|b| b.try_into())
+            .collect();
+
+        assert_eq!(
+            seq.unwrap(),
+            vec![Base(DNA::A), Base(DNA::T), Base(DNA::G), Gap, Base(DNA::N)]
+        );
     }
+
 }
 

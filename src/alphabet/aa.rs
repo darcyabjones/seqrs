@@ -1,8 +1,9 @@
 /// Definitions for the Protein alphabet
 
-use matcher::{RedundantAlphabet, Match};
-use errors::{SeqError, SeqErrorKind};
+use crate::matcher::{RedundantAlphabet, Match};
+use crate::errors::{SeqError, SeqErrorKind};
 use std::convert::TryFrom;
+
 
 alphabet! {
     #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Copy, Clone)]
@@ -331,6 +332,7 @@ mod tests {
     use super::*;
     use proptest::prelude::any;
     use proptest::sample::select;
+    use proptest::{proptest, proptest_helper};
 
     #[test]
     fn test_cardinality() {

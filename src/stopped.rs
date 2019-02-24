@@ -731,7 +731,7 @@ impl<T> fmt::Display for Stopped<T>
 mod tests {
 
     use super::*;
-    use alphabet::AA;
+    use crate::alphabet::AA;
 
     #[test]
     fn test_from() {
