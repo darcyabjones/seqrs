@@ -4,24 +4,13 @@
 //! The tables are implemented as empty structs that act as tokens for which
 //! implementation of the `TranslationTable` trait to use.
 
-
 mod dna_aa;
-mod trans;
 mod tags;
+mod trans;
 
+pub use crate::translate::trans::{IntoTranslate, Translate, TranslationTable};
 
-pub use crate::translate::trans::{
-    TranslationTable,
-    IntoTranslate,
-    Translate,
-};
-
-
-pub use crate::translate::tags::{
-    CodonTagTable,
-    CodonTags,
-};
-
+pub use crate::translate::tags::{CodonTagTable, CodonTags};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum NCBITransTable {
@@ -54,13 +43,11 @@ pub enum NCBITransTable {
     CephalodiscidaeMito,
 }
 
-
 impl Default for NCBITransTable {
     fn default() -> NCBITransTable {
         NCBITransTable::Standard
     }
 }
-
 
 impl NCBITransTable {
     pub fn variants() -> Vec<Self> {
@@ -97,13 +84,13 @@ impl NCBITransTable {
 
     pub fn id_to_table(id: usize) -> Option<Self> {
         match id {
-            1  => Some(NCBITransTable::Standard),
-            2  => Some(NCBITransTable::VertebrateMito),
-            3  => Some(NCBITransTable::YeastMito),
-            4  => Some(NCBITransTable::MoldProtozoanCoelenterateMito),
-            5  => Some(NCBITransTable::InvertebrateMito),
-            6  => Some(NCBITransTable::CiliateDasycladaceanHexamita),
-            9  => Some(NCBITransTable::EchinodermFlatwormMito),
+            1 => Some(NCBITransTable::Standard),
+            2 => Some(NCBITransTable::VertebrateMito),
+            3 => Some(NCBITransTable::YeastMito),
+            4 => Some(NCBITransTable::MoldProtozoanCoelenterateMito),
+            5 => Some(NCBITransTable::InvertebrateMito),
+            6 => Some(NCBITransTable::CiliateDasycladaceanHexamita),
+            9 => Some(NCBITransTable::EchinodermFlatwormMito),
             10 => Some(NCBITransTable::Euplotid),
             11 => Some(NCBITransTable::BacterialArchaealPlastid),
             12 => Some(NCBITransTable::AltYeast),
@@ -124,7 +111,7 @@ impl NCBITransTable {
             31 => Some(NCBITransTable::Blastocrithidia),
             32 => Some(NCBITransTable::BalanophoraceaePlastid),
             33 => Some(NCBITransTable::CephalodiscidaeMito),
-            _  => None,
+            _ => None,
         }
     }
 }

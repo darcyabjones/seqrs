@@ -55,12 +55,10 @@
 
 use std::ops::Try;
 
-
 pub trait Complement {
     type Compl;
     fn complement(self) -> Self::Compl;
 }
-
 
 pub trait IntoReverseComplement: Sized {
     type Iter;
@@ -68,17 +66,16 @@ pub trait IntoReverseComplement: Sized {
     fn reverse_complement(self) -> ReverseComplement<Self>;
 }
 
-
 /// A wrapper around map and rev.
 #[derive(Debug, Clone)]
 pub struct ReverseComplement<I> {
     iter: I,
 }
 
-
 impl<I, T> IntoReverseComplement for I
-    where T: Complement,
-          I: DoubleEndedIterator<Item=T>,
+where
+    T: Complement,
+    I: DoubleEndedIterator<Item = T>,
 {
     type Iter = I;
 
@@ -87,10 +84,10 @@ impl<I, T> IntoReverseComplement for I
     }
 }
 
-
 impl<I, T> Iterator for ReverseComplement<I>
-    where I: DoubleEndedIterator<Item=T>,
-          T: Complement,
+where
+    I: DoubleEndedIterator<Item = T>,
+    T: Complement,
 {
     type Item = <T as Complement>::Compl;
 
@@ -106,9 +103,10 @@ impl<I, T> Iterator for ReverseComplement<I>
 
     #[inline]
     fn try_fold<Acc, G, R>(&mut self, init: Acc, mut g: G) -> R
-        where Self: Sized,
-              G: FnMut(Acc, Self::Item) -> R,
-              R: Try<Ok=Acc>,
+    where
+        Self: Sized,
+        G: FnMut(Acc, Self::Item) -> R,
+        R: Try<Ok = Acc>,
     {
         let mut accum = init;
         while let Some(x) = self.next() {
@@ -118,10 +116,10 @@ impl<I, T> Iterator for ReverseComplement<I>
     }
 }
 
-
 impl<'a, I, T> DoubleEndedIterator for ReverseComplement<I>
-    where I: DoubleEndedIterator<Item=T>,
-          T: Complement,
+where
+    I: DoubleEndedIterator<Item = T>,
+    T: Complement,
 {
     #[inline]
     fn next_back(&mut self) -> Option<<T as Complement>::Compl> {
@@ -130,9 +128,10 @@ impl<'a, I, T> DoubleEndedIterator for ReverseComplement<I>
 
     #[inline]
     fn try_rfold<Acc, G, R>(&mut self, init: Acc, mut g: G) -> R
-        where Self: Sized,
-              G: FnMut(Acc, Self::Item) -> R,
-              R: Try<Ok=Acc>,
+    where
+        Self: Sized,
+        G: FnMut(Acc, Self::Item) -> R,
+        R: Try<Ok = Acc>,
     {
         let mut accum = init;
         while let Some(x) = self.next_back() {
@@ -142,10 +141,10 @@ impl<'a, I, T> DoubleEndedIterator for ReverseComplement<I>
     }
 }
 
-
 impl<I, T> ExactSizeIterator for ReverseComplement<I>
-    where I: ExactSizeIterator<Item=T> + DoubleEndedIterator<Item=T>,
-          T: Complement,
+where
+    I: ExactSizeIterator<Item = T> + DoubleEndedIterator<Item = T>,
+    T: Complement,
 {
     #[inline]
     fn len(&self) -> usize {
@@ -157,4 +156,3 @@ impl<I, T> ExactSizeIterator for ReverseComplement<I>
         self.iter.is_empty()
     }
 }
-

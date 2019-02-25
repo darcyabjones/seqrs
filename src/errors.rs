@@ -1,12 +1,12 @@
 //! Error types for the library.
 
+use failure::{Backtrace, Context, Fail};
 use std::fmt;
 use std::fmt::Display;
-use failure::{Context, Fail, Backtrace};
 
 #[derive(Debug)]
 pub struct SeqError {
-    inner: Context<SeqErrorKind>
+    inner: Context<SeqErrorKind>,
 }
 
 #[derive(Debug, Fail, PartialEq, Eq, Clone)]
@@ -16,7 +16,6 @@ pub enum SeqErrorKind {
     #[fail(display = "String must contain 3 characters to be parsed into codon.")]
     CodonFromStrTooShort,
 }
-
 
 impl Fail for SeqError {
     fn cause(&self) -> Option<&Fail> {
@@ -42,7 +41,9 @@ impl SeqError {
 
 impl From<SeqErrorKind> for SeqError {
     fn from(kind: SeqErrorKind) -> SeqError {
-        SeqError { inner: Context::new(kind) }
+        SeqError {
+            inner: Context::new(kind),
+        }
     }
 }
 

@@ -1,9 +1,7 @@
-/// Definitions for the Protein alphabet
-
-use crate::matcher::{RedundantAlphabet, Match};
 use crate::errors::{SeqError, SeqErrorKind};
+/// Definitions for the Protein alphabet
+use crate::matcher::{Match, RedundantAlphabet};
 use std::convert::TryFrom;
-
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum AA {
@@ -35,18 +33,40 @@ pub enum AA {
     Z,
 }
 
-
 impl AA {
     pub fn variants() -> Vec<Self> {
-        vec![AA::A, AA::B, AA::C, AA::D, AA::E, AA::F,
-             AA::G, AA::H, AA::I, AA::J, AA::K, AA::L,
-             AA::M, AA::N, AA::O, AA::P, AA::Q, AA::R,
-             AA::S, AA::T, AA::U, AA::V, AA::W, AA::X,
-             AA::Y, AA::Z]
+        vec![
+            AA::A,
+            AA::B,
+            AA::C,
+            AA::D,
+            AA::E,
+            AA::F,
+            AA::G,
+            AA::H,
+            AA::I,
+            AA::J,
+            AA::K,
+            AA::L,
+            AA::M,
+            AA::N,
+            AA::O,
+            AA::P,
+            AA::Q,
+            AA::R,
+            AA::S,
+            AA::T,
+            AA::U,
+            AA::V,
+            AA::W,
+            AA::X,
+            AA::Y,
+            AA::Z,
+        ]
     }
 
     pub fn cardinality() -> usize {
-        Self::variants().len()
+        26
     }
 
     pub fn is_iupac(&self) -> bool {
@@ -110,15 +130,28 @@ impl AA {
             AA::Z => String::from("Glutamine or Glutamic acid"),
         }
     }
-}
 
+    fn redundant_matches(&self) -> Vec<Self> {
+        use super::AA::*;
+        match self {
+            B => vec![D, N],
+            J => vec![I, L],
+            X => vec![
+                A, C, D, E, F, G, H, I, K, L, M, N, O, P, Q, R, S, T, U, V, W, Y,
+            ],
+            Z => vec![E, Q],
+            _ => Vec::new(),
+        }
+    }
+}
 
 impl Default for AA {
     /// Returns [`X`][AA::X].
     #[inline]
-    fn default() -> Self { AA::X }
+    fn default() -> Self {
+        AA::X
+    }
 }
-
 
 impl TryFrom<&u8> for AA {
     type Error = SeqError;
@@ -155,14 +188,12 @@ impl TryFrom<&u8> for AA {
     }
 }
 
-
 impl TryFrom<u8> for AA {
     type Error = SeqError;
     fn try_from(base: u8) -> Result<Self, Self::Error> {
         Self::try_from(&(base))
     }
 }
-
 
 impl TryFrom<&char> for AA {
     type Error = SeqError;
@@ -171,14 +202,12 @@ impl TryFrom<&char> for AA {
     }
 }
 
-
 impl TryFrom<char> for AA {
     type Error = SeqError;
     fn try_from(base: char) -> Result<Self, Self::Error> {
         crate::utils::char_to_byte(&base).and_then(|b| Self::try_from(&b))
     }
 }
-
 
 impl From<&AA> for u8 {
     fn from(base: &AA) -> Self {
@@ -213,21 +242,23 @@ impl From<&AA> for u8 {
     }
 }
 
-
 impl From<AA> for u8 {
-    fn from(base: AA) -> Self { (&base).into() }
+    fn from(base: AA) -> Self {
+        (&base).into()
+    }
 }
-
 
 impl From<&AA> for char {
-    fn from(base: &AA) -> Self { u8::from(base) as char }
+    fn from(base: &AA) -> Self {
+        u8::from(base) as char
+    }
 }
-
 
 impl From<AA> for char {
-    fn from(base: AA) -> Self { u8::from(&base) as char }
+    fn from(base: AA) -> Self {
+        u8::from(&base) as char
+    }
 }
-
 
 impl std::fmt::Display for AA {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -235,12 +266,12 @@ impl std::fmt::Display for AA {
     }
 }
 
-
 impl Match<AA> for AA {
     fn matches(&self, other: &AA) -> bool {
         match (&self, &other) {
-            (    _, AA::X) => true,
-            (AA::X, _    ) => true,
+            (a, b) if a == b => true,
+            (_, AA::X) => true,
+            (AA::X, _) => true,
             (AA::B, AA::D) => true,
             (AA::B, AA::N) => true,
             (AA::D, AA::B) => true,
@@ -253,66 +284,64 @@ impl Match<AA> for AA {
             (AA::Z, AA::Q) => true,
             (AA::E, AA::Z) => true,
             (AA::Q, AA::Z) => true,
-            (    a,     b) => a == b,
+            _ => false,
         }
     }
 }
 
-
 impl RedundantAlphabet for AA {
-
     fn union(&self, other: &Self) -> Self {
         match (self, other) {
             (a, b) if a == b => *a,
-            (AA::N, AA::D)   => AA::B,
-            (AA::D, AA::N)   => AA::B,
-            (AA::L, AA::I)   => AA::J,
-            (AA::I, AA::L)   => AA::J,
-            (AA::Q, AA::E)   => AA::Z,
-            (AA::E, AA::Q)   => AA::Z,
-            _                => AA::X,
+            (AA::N, AA::D) => AA::B,
+            (AA::D, AA::N) => AA::B,
+            (AA::L, AA::I) => AA::J,
+            (AA::I, AA::L) => AA::J,
+            (AA::Q, AA::E) => AA::Z,
+            (AA::E, AA::Q) => AA::Z,
+            _ => AA::X,
         }
     }
 
     fn intersection(&self, other: &Self) -> Option<Self> {
         match (self, other) {
             (a, b) if a == b => Some(*a),
-            (AA::X,     b)   => Some(*b),
-            (a,     AA::X)   => Some(*a),
-            (AA::B, AA::D)   => Some(AA::D),
-            (AA::B, AA::N)   => Some(AA::N),
-            (AA::D, AA::B)   => Some(AA::D),
-            (AA::N, AA::B)   => Some(AA::N),
-            (AA::J, AA::I)   => Some(AA::I),
-            (AA::J, AA::L)   => Some(AA::L),
-            (AA::I, AA::J)   => Some(AA::I),
-            (AA::L, AA::J)   => Some(AA::L),
-            (AA::Z, AA::E)   => Some(AA::E),
-            (AA::Z, AA::Q)   => Some(AA::Q),
-            (AA::E, AA::Z)   => Some(AA::E),
-            (AA::Q, AA::Z)   => Some(AA::Q),
-            _                => None,
+            (AA::X, b) => Some(*b),
+            (a, AA::X) => Some(*a),
+            (AA::B, AA::D) => Some(AA::D),
+            (AA::B, AA::N) => Some(AA::N),
+            (AA::D, AA::B) => Some(AA::D),
+            (AA::N, AA::B) => Some(AA::N),
+            (AA::J, AA::I) => Some(AA::I),
+            (AA::J, AA::L) => Some(AA::L),
+            (AA::I, AA::J) => Some(AA::I),
+            (AA::L, AA::J) => Some(AA::L),
+            (AA::Z, AA::E) => Some(AA::E),
+            (AA::Z, AA::Q) => Some(AA::Q),
+            (AA::E, AA::Z) => Some(AA::E),
+            (AA::Q, AA::Z) => Some(AA::Q),
+            _ => None,
         }
     }
 
     fn difference(&self, other: &Self) -> Option<Self> {
         match (self, other) {
             (a, b) if a == b => None,
-            (_,     AA::X)   => None,
-            (AA::X, _    )   => Some(AA::X),
-            (AA::B, AA::D)   => Some(AA::N),
-            (AA::B, AA::N)   => Some(AA::D),
-            (AA::D, AA::B)   => None,
-            (AA::N, AA::B)   => None,
-            (AA::J, AA::I)   => Some(AA::L),
-            (AA::J, AA::L)   => Some(AA::I),
-            (AA::I, AA::J)   => Some(AA::L),
-            (AA::L, AA::J)   => Some(AA::I),
-            (AA::Z, AA::E)   => Some(AA::Q),
-            (AA::Z, AA::Q)   => Some(AA::E),
-            (AA::E, AA::Z)   => Some(AA::Q),
-            (AA::Q, AA::Z)   => Some(AA::E),
-            (a,         _)   => Some(*a),
+            (_, AA::X) => None,
+            (AA::X, _) => Some(AA::X),
+            (AA::B, AA::D) => Some(AA::N),
+            (AA::B, AA::N) => Some(AA::D),
+            (AA::D, AA::B) => None,
+            (AA::N, AA::B) => None,
+            (AA::J, AA::I) => Some(AA::L),
+            (AA::J, AA::L) => Some(AA::I),
+            (AA::I, AA::J) => Some(AA::L),
+            (AA::L, AA::J) => Some(AA::I),
+            (AA::Z, AA::E) => Some(AA::Q),
+            (AA::Z, AA::Q) => Some(AA::E),
+            (AA::E, AA::Z) => Some(AA::Q),
+            (AA::Q, AA::Z) => Some(AA::E),
+            (a, _) => Some(*a),
         }
     }
 
@@ -323,7 +352,6 @@ impl RedundantAlphabet for AA {
         }
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -337,7 +365,7 @@ mod tests {
         assert_eq!(AA::cardinality(), 26);
     }
 
-    proptest!{
+    proptest! {
         // Basic parsing properties.
         #[test]
         fn test_from_u8_doesnt_crash(c in any::<u8>()) {

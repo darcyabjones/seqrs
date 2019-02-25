@@ -4,25 +4,23 @@ pub trait CodonTagTable<K, V> {
     fn get_tag(&self, k: K) -> V;
 }
 
-
 pub trait IntoCodonTags<O, T>: Sized {
     fn codon_tags(self, table: T) -> CodonTags<Self, T, O>;
 }
 
-
 impl<O, T, I> IntoCodonTags<O, T> for I
-    where T: CodonTagTable<I::Item, O>,
-          I: Iterator
+where
+    T: CodonTagTable<I::Item, O>,
+    I: Iterator,
 {
     fn codon_tags(self, table: T) -> CodonTags<Self, T, O> {
         CodonTags {
             iter: self,
             table: table,
-            b: PhantomData
+            b: PhantomData,
         }
     }
 }
-
 
 #[derive(Debug, Clone)]
 pub struct CodonTags<I, T, O> {
@@ -31,10 +29,10 @@ pub struct CodonTags<I, T, O> {
     b: PhantomData<O>,
 }
 
-
 impl<O, I, T> Iterator for CodonTags<I, T, O>
-    where I: Iterator,
-          T: CodonTagTable<I::Item, O>
+where
+    I: Iterator,
+    T: CodonTagTable<I::Item, O>,
 {
     type Item = O;
 
@@ -49,10 +47,10 @@ impl<O, I, T> Iterator for CodonTags<I, T, O>
     }
 }
 
-
 impl<O, I, T> DoubleEndedIterator for CodonTags<I, T, O>
-    where I: DoubleEndedIterator,
-          T: CodonTagTable<I::Item, O>,
+where
+    I: DoubleEndedIterator,
+    T: CodonTagTable<I::Item, O>,
 {
     #[inline]
     fn next_back(&mut self) -> Option<O> {
@@ -60,10 +58,10 @@ impl<O, I, T> DoubleEndedIterator for CodonTags<I, T, O>
     }
 }
 
-
 impl<O, I, T> ExactSizeIterator for CodonTags<I, T, O>
-    where I: ExactSizeIterator,
-          T: CodonTagTable<I::Item, O>,
+where
+    I: ExactSizeIterator,
+    T: CodonTagTable<I::Item, O>,
 {
     #[inline]
     fn len(&self) -> usize {
@@ -76,18 +74,16 @@ impl<O, I, T> ExactSizeIterator for CodonTags<I, T, O>
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    use crate::translate::NCBITransTable;
-    use crate::alphabet::DNA::*;
     use crate::alphabet::CodonTag;
+    use crate::alphabet::DNA::*;
     use crate::codon::Codon;
     use crate::gapped::Gapped;
-    use crate::gapped::Gapped::{Gap, Base};
-
+    use crate::gapped::Gapped::{Base, Gap};
+    use crate::translate::NCBITransTable;
 
     #[test]
     fn test_codon_tag_table_ownership() {
@@ -112,49 +108,34 @@ mod tests {
         );
     }
 
-
     #[test]
     fn test_codon_tags_iter() {
-        let arr = vec![
-            Codon(A, T, G),
-            Codon(T, A, A),
-        ];
+        let arr = vec![Codon(A, T, G), Codon(T, A, A)];
 
-        let trans: Vec<CodonTag> = arr.iter()
-            .codon_tags(NCBITransTable::Standard)
-            .collect();
+        let trans: Vec<CodonTag> = arr.iter().codon_tags(NCBITransTable::Standard).collect();
 
         assert_eq!(trans, vec![CodonTag::Start, CodonTag::Stop]);
         println!("I can still use this {:?}", arr);
     }
 
-
     #[test]
     fn test_codon_tags_into_iter() {
-        let arr = vec![
-            Codon(A, T, G),
-            Codon(T, A, A),
-        ];
+        let arr = vec![Codon(A, T, G), Codon(T, A, A)];
 
-        let trans: Vec<CodonTag> = arr.into_iter()
+        let trans: Vec<CodonTag> = arr
+            .into_iter()
             .codon_tags(NCBITransTable::Standard)
             .collect();
 
         assert_eq!(trans, vec![CodonTag::Start, CodonTag::Stop]);
     }
 
-
     #[test]
     fn test_gapped_codon_tags_iter() {
-        let arr = vec![
-            Base(Codon(A, T, G)),
-            Gap,
-            Base(Codon(T, A, A)),
-        ];
+        let arr = vec![Base(Codon(A, T, G)), Gap, Base(Codon(T, A, A))];
 
-        let trans: Vec<Gapped<CodonTag>> = arr.iter()
-            .codon_tags(NCBITransTable::Standard)
-            .collect();
+        let trans: Vec<Gapped<CodonTag>> =
+            arr.iter().codon_tags(NCBITransTable::Standard).collect();
 
         assert_eq!(
             trans,
@@ -163,16 +144,12 @@ mod tests {
         println!("I can still use this {:?}", arr);
     }
 
-
     #[test]
     fn test_gapped_codon_tags_into_iter() {
-        let arr = vec![
-            Base(Codon(A, T, G)),
-            Gap,
-            Base(Codon(T, A, A)),
-        ];
+        let arr = vec![Base(Codon(A, T, G)), Gap, Base(Codon(T, A, A))];
 
-        let trans: Vec<Gapped<CodonTag>> = arr.into_iter()
+        let trans: Vec<Gapped<CodonTag>> = arr
+            .into_iter()
             .codon_tags(NCBITransTable::Standard)
             .collect();
 

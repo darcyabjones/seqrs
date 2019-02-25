@@ -1,9 +1,8 @@
-/// A fully redundant DNA alphabet.
-
-use crate::errors::{SeqError, SeqErrorKind};
 use crate::complement::Complement;
-use crate::matcher::{Match, RedundantAlphabet};
+/// A fully redundant DNA alphabet.
+use crate::errors::{SeqError, SeqErrorKind};
 use crate::gapped::Gapped;
+use crate::matcher::{Match, RedundantAlphabet};
 
 use std::convert::TryFrom;
 
@@ -27,7 +26,6 @@ pub enum DNA {
     N = 0b1111,
 }
 
-
 impl DNA {
     pub fn name(&self) -> String {
         match &self {
@@ -49,31 +47,62 @@ impl DNA {
         }
     }
 
-
     pub fn variants() -> Vec<Self> {
-        vec![DNA::A, DNA::C, DNA::M, DNA::G, DNA::R,
-             DNA::S, DNA::V, DNA::T, DNA::W, DNA::Y,
-             DNA::H, DNA::K, DNA::D, DNA::B, DNA::N]
+        vec![
+            DNA::A,
+            DNA::C,
+            DNA::M,
+            DNA::G,
+            DNA::R,
+            DNA::S,
+            DNA::V,
+            DNA::T,
+            DNA::W,
+            DNA::Y,
+            DNA::H,
+            DNA::K,
+            DNA::D,
+            DNA::B,
+            DNA::N,
+        ]
     }
-
 
     pub fn cardinality() -> usize {
-        Self::variants().len()
+        15
+    }
+
+    fn redundant_matches(&self) -> Vec<Self> {
+        use super::DNA::*;
+        match self {
+            M => vec![A, C],
+            R => vec![A, G],
+            S => vec![C, G],
+            V => vec![A, C, G],
+            W => vec![A, T],
+            Y => vec![C, T],
+            H => vec![A, C, T],
+            K => vec![G, T],
+            D => vec![A, G, T],
+            B => vec![C, G, T],
+            N => vec![A, C, G, T],
+            _ => Vec::new(),
+        }
     }
 }
 
-
 impl From<&DNA> for DNA {
-    fn from(b: &Self) -> Self { *b }
+    fn from(b: &Self) -> Self {
+        *b
+    }
 }
-
 
 impl Default for DNA {
     /// Returns [`N`][DNA::N].
     #[inline]
-    fn default() -> Self { DNA::N }
+    fn default() -> Self {
+        DNA::N
+    }
 }
-
 
 impl TryFrom<&u8> for DNA {
     type Error = SeqError;
@@ -94,11 +123,10 @@ impl TryFrom<&u8> for DNA {
             b'D' => Ok(DNA::D),
             b'B' => Ok(DNA::B),
             b'N' => Ok(DNA::N),
-            b => Err(SeqErrorKind::AlphabetReadError{base: b as char}.into()),
+            b => Err(SeqErrorKind::AlphabetReadError { base: b as char }.into()),
         }
     }
 }
-
 
 impl TryFrom<u8> for DNA {
     type Error = SeqError;
@@ -107,7 +135,6 @@ impl TryFrom<u8> for DNA {
     }
 }
 
-
 impl TryFrom<&char> for DNA {
     type Error = SeqError;
     fn try_from(base: &char) -> Result<Self, Self::Error> {
@@ -115,14 +142,12 @@ impl TryFrom<&char> for DNA {
     }
 }
 
-
 impl TryFrom<char> for DNA {
     type Error = SeqError;
     fn try_from(base: char) -> Result<Self, Self::Error> {
         crate::utils::char_to_byte(&base).and_then(|b| Self::try_from(&b))
     }
 }
-
 
 impl From<&DNA> for u8 {
     fn from(base: &DNA) -> Self {
@@ -146,21 +171,23 @@ impl From<&DNA> for u8 {
     }
 }
 
-
 impl From<DNA> for u8 {
-    fn from(base: DNA) -> Self { (&base).into() }
+    fn from(base: DNA) -> Self {
+        (&base).into()
+    }
 }
-
 
 impl From<&DNA> for char {
-    fn from(base: &DNA) -> Self { u8::from(base) as char }
+    fn from(base: &DNA) -> Self {
+        u8::from(base) as char
+    }
 }
-
 
 impl From<DNA> for char {
-    fn from(base: DNA) -> Self { u8::from(&base) as char }
+    fn from(base: DNA) -> Self {
+        u8::from(&base) as char
+    }
 }
-
 
 impl std::fmt::Display for DNA {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -168,20 +195,15 @@ impl std::fmt::Display for DNA {
     }
 }
 
-
 impl Complement for &DNA {
     type Compl = DNA;
     fn complement(self) -> Self::Compl {
         let a = *self as u8;
-        let comp = (a & 0b0001) << 3 | (a & 0b0010) << 1 |
-                   (a & 0b0100) >> 1 | (a & 0b1000) >> 3;
+        let comp = (a & 0b0001) << 3 | (a & 0b0010) << 1 | (a & 0b0100) >> 1 | (a & 0b1000) >> 3;
 
-        unsafe {
-            std::mem::transmute::<u8, Self::Compl>(comp)
-        }
+        unsafe { std::mem::transmute::<u8, Self::Compl>(comp) }
     }
 }
-
 
 impl Complement for DNA {
     type Compl = DNA;
@@ -190,14 +212,12 @@ impl Complement for DNA {
     }
 }
 
-
 impl Complement for &Gapped<DNA> {
     type Compl = Gapped<DNA>;
     fn complement(self) -> Self::Compl {
         self.map(|a| a.complement())
     }
 }
-
 
 impl Complement for Gapped<DNA> {
     type Compl = Gapped<DNA>;
@@ -206,14 +226,12 @@ impl Complement for Gapped<DNA> {
     }
 }
 
-
 impl Complement for Gapped<&DNA> {
     type Compl = Gapped<DNA>;
     fn complement(self) -> Self::Compl {
         self.map(|a| a.complement())
     }
 }
-
 
 impl Match<DNA> for DNA {
     fn matches(&self, other: &DNA) -> bool {
@@ -223,14 +241,11 @@ impl Match<DNA> for DNA {
     }
 }
 
-
 impl RedundantAlphabet for DNA {
     fn union(&self, other: &Self) -> Self {
         let a = *self as u8;
         let b = *other as u8;
-        unsafe {
-            std::mem::transmute::<u8, DNA>(a | b)
-        }
+        unsafe { std::mem::transmute::<u8, DNA>(a | b) }
     }
 
     fn intersection(&self, other: &Self) -> Option<Self> {
@@ -238,9 +253,7 @@ impl RedundantAlphabet for DNA {
         let b = *other as u8;
         let inter = a & b;
         if inter != 0 {
-            unsafe {
-                Some(std::mem::transmute::<u8, DNA>(inter))
-            }
+            unsafe { Some(std::mem::transmute::<u8, DNA>(inter)) }
         } else {
             None
         }
@@ -251,14 +264,11 @@ impl RedundantAlphabet for DNA {
         let b = *other as u8;
         let inter = a & (!b);
         if inter != 0 {
-            unsafe {
-                Some(std::mem::transmute::<u8, DNA>(inter))
-            }
+            unsafe { Some(std::mem::transmute::<u8, DNA>(inter)) }
         } else {
             None
         }
     }
-
 
     fn is_redundant(&self) -> bool {
         match self {
@@ -268,16 +278,15 @@ impl RedundantAlphabet for DNA {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    use test::{Bencher, black_box};
-    use proptest::{proptest, proptest_helper};
-    use proptest::prelude::any;
-    use proptest::sample::select;
     use crate::complement::IntoReverseComplement;
     use crate::gapped::Gapped;
+    use proptest::prelude::any;
+    use proptest::sample::select;
+    use proptest::{proptest, proptest_helper};
+    use test::{black_box, Bencher};
 
     #[test]
     fn test_complement_vec() {
@@ -347,7 +356,7 @@ mod tests {
         assert_eq!(DNA::cardinality(), 15);
     }
 
-    proptest!{
+    proptest! {
         // Basic parsing properties.
         #[test]
         fn test_from_u8_doesnt_crash(c in any::<u8>()) {

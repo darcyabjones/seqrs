@@ -2,7 +2,6 @@
 ///
 ///
 
-
 /// Creates a single letter biological alphabet.
 ///
 #[macro_export]

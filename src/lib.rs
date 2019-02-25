@@ -5,18 +5,17 @@
 
 extern crate test;
 
-
 pub mod utils;
 
 #[macro_use]
 pub mod macros;
 
-pub mod errors;
 pub mod alphabet;
+pub mod errors;
 
-pub mod matcher;
-pub mod complement;
-pub mod translate;
 pub mod codon;
+pub mod complement;
 pub mod gapped;
+pub mod matcher;
 pub mod stopped;
+pub mod translate;

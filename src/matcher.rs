@@ -126,7 +126,6 @@
 //! [`Match`]: trait.Match.html
 //! [`RedundantAlphabet`]: trait.RedundantAlphabet.html
 
-
 /// A variant of the [`PartialEq`] trait specificically for handling redundant
 /// alphabets, and to provide an universal interface for pattern matching.
 ///
@@ -138,7 +137,6 @@
 /// [`PartialEq`]: https://doc.rust-lang.org/std/cmp/trait.PartialEq.html
 /// [module level documentation]: ../index.html#examples
 pub trait Match<T> {
-
     /// Defines "equality" semantics between elements.
     fn matches(&self, other: &T) -> bool;
 
@@ -150,7 +148,6 @@ pub trait Match<T> {
         !self.matches(other)
     }
 }
-
 
 /// Provides partial set operations for redundant alphabets.
 ///
@@ -176,7 +173,6 @@ pub trait Match<T> {
 /// [`None`]: https://doc.rust-lang.org/std/option/enum.Option.html#variant.None
 /// [module level documentation]: ../index.html#examples
 pub trait RedundantAlphabet: Sized {
-
     /// The set union of two characters.
     fn union(&self, other: &Self) -> Self;
 

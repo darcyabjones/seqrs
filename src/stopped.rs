@@ -5,7 +5,6 @@
 use std::convert::TryFrom;
 use std::fmt;
 
-
 /// A stopped alphabet wraps an underlying alphabet in a new type.
 /// Regular amino acids exist in [`Res`] wrappers, and Stop codons as [`Stop`]
 /// variants. The [`StopOr`] variant handles cases of translating redundant
@@ -22,9 +21,7 @@ pub enum Stopped<T> {
     Stop,
 }
 
-
 impl<T> Stopped<T> {
-
     /// Returns `true` if is the [`Res`] or [`StopOr`] variant.
     ///
     /// [`Res`]: #variant.Res
@@ -53,7 +50,6 @@ impl<T> Stopped<T> {
         }
     }
 
-
     /// Returns `true` if is the [`Stop`] or [`StopOr`] variant.
     ///
     /// [`Stop`]: #variant.Stop
@@ -81,7 +77,6 @@ impl<T> Stopped<T> {
             true
         }
     }
-
 
     /// Converts from [`Stopped<T>`] to [`Stopped<&T>`].
     ///
@@ -112,12 +107,11 @@ impl<T> Stopped<T> {
     /// ```
     pub fn as_ref(&self) -> Stopped<&T> {
         match *self {
-            Stopped::Res(ref x)    => Stopped::Res(x),
+            Stopped::Res(ref x) => Stopped::Res(x),
             Stopped::StopOr(ref x) => Stopped::StopOr(x),
-            Stopped::Stop          => Stopped::Stop,
+            Stopped::Stop => Stopped::Stop,
         }
     }
-
 
     /// Converts from [`Stopped<T>`] to [`Stopped<&mut T>`].
     ///
@@ -141,12 +135,11 @@ impl<T> Stopped<T> {
     #[inline]
     pub fn as_mut(&mut self) -> Stopped<&mut T> {
         match *self {
-            Stopped::Res(ref mut x)     => Stopped::Res(x),
-            Stopped::StopOr(ref mut x)  => Stopped::StopOr(x),
-            Stopped::Stop               => Stopped::Stop,
+            Stopped::Res(ref mut x) => Stopped::Res(x),
+            Stopped::StopOr(ref mut x) => Stopped::StopOr(x),
+            Stopped::Stop => Stopped::Stop,
         }
     }
-
 
     /// Unwraps a [`Stopped`], yielding the content of a [`Res`] or [`StopOr`].
     ///
@@ -181,11 +174,10 @@ impl<T> Stopped<T> {
     pub fn expect(self, msg: &str) -> T {
         match self {
             Stopped::Res(x) => x,
-            Stopped::StopOr(x)  => x,
-            Stopped::Stop   => panic!("{}", msg),
+            Stopped::StopOr(x) => x,
+            Stopped::Stop => panic!("{}", msg),
         }
     }
-
 
     /// Moves the value `v` out of the [`Stopped<T>`] if it is [`Res(v)`] or
     /// [`StopOr(v)`].
@@ -224,11 +216,10 @@ impl<T> Stopped<T> {
     pub fn unwrap(self) -> T {
         match self {
             Stopped::Res(x) => x,
-            Stopped::StopOr(x)  => x,
-            Stopped::Stop   => panic!("Called `Stopped::unwrap()` on a `Stop` value."),
+            Stopped::StopOr(x) => x,
+            Stopped::Stop => panic!("Called `Stopped::unwrap()` on a `Stop` value."),
         }
     }
-
 
     /// Returns the contained value or a default if variant is [`Stop`].
     ///
@@ -252,11 +243,10 @@ impl<T> Stopped<T> {
     pub fn unwrap_or(self, def: T) -> T {
         match self {
             Stopped::Res(x) => x,
-            Stopped::StopOr(x)  => x,
-            Stopped::Stop   => def,
+            Stopped::StopOr(x) => x,
+            Stopped::Stop => def,
         }
     }
-
 
     /// Returns the contained value or computes it from a closure.
     ///
@@ -272,11 +262,10 @@ impl<T> Stopped<T> {
     pub fn unwrap_or_else<F: FnOnce() -> T>(self, f: F) -> T {
         match self {
             Stopped::Res(x) => x,
-            Stopped::StopOr(x)  => x,
-            Stopped::Stop   => f(),
+            Stopped::StopOr(x) => x,
+            Stopped::Stop => f(),
         }
     }
-
 
     /// Maps a [`Stopped<T>`] to [`Stopped<U>`] by applying a function to
     /// a contained value.
@@ -305,11 +294,10 @@ impl<T> Stopped<T> {
     pub fn map<U, F: FnOnce(T) -> U>(self, f: F) -> Stopped<U> {
         match self {
             Stopped::Res(x) => Stopped::Res(f(x)),
-            Stopped::StopOr(x)  => Stopped::StopOr(f(x)),
-            Stopped::Stop   => Stopped::Stop,
+            Stopped::StopOr(x) => Stopped::StopOr(f(x)),
+            Stopped::Stop => Stopped::Stop,
         }
     }
-
 
     /// Applies a function to the contained value (if any),
     /// or returns the provided default (if not).
@@ -332,11 +320,10 @@ impl<T> Stopped<T> {
     pub fn map_or<U, F: FnOnce(T) -> U>(self, default: U, f: F) -> U {
         match self {
             Stopped::Res(x) => f(x),
-            Stopped::StopOr(x)  => f(x),
-            Stopped::Stop   => default,
+            Stopped::StopOr(x) => f(x),
+            Stopped::Stop => default,
         }
     }
-
 
     /// Applies a function to the contained value (if any),
     /// or computes a default (if not).
@@ -357,13 +344,14 @@ impl<T> Stopped<T> {
     /// assert_eq!(x.map_or_else(|| '*', |v| v.to_ascii_lowercase()), '*');
     /// ```
     pub fn map_or_else<U, D, F>(self, default: D, f: F) -> U
-        where F: FnOnce(T) -> U,
-              D: FnOnce() -> U,
+    where
+        F: FnOnce(T) -> U,
+        D: FnOnce() -> U,
     {
         match self {
             Stopped::Res(x) => f(x),
-            Stopped::StopOr(x)  => f(x),
-            Stopped::Stop   => default(),
+            Stopped::StopOr(x) => f(x),
+            Stopped::Stop => default(),
         }
     }
 
@@ -407,7 +395,6 @@ impl<T> Stopped<T> {
         self.map_or(Stopped::Stop, f)
     }
 
-
     /// Transforms the [`Stopped<T>`] into a [`Result<T, E>`], mapping
     /// [`Res(v)`] or [`StopOr(v)`] to [`Ok(v)`] and [`Stop`] to [`Err(err)`].
     ///
@@ -444,10 +431,9 @@ impl<T> Stopped<T> {
         match self {
             Stopped::Res(x) => Ok(x),
             Stopped::StopOr(x) => Ok(x),
-            Stopped::Stop   => Err(err),
+            Stopped::Stop => Err(err),
         }
     }
-
 
     /// Transforms the [`Stopped<T>`] into a [`Result<T, E>`], mapping
     /// [`Res(v)`] or [`StopOr(v)`] to [`Ok(v)`] and [`Stop`] to [`Err(err())`].
@@ -477,12 +463,11 @@ impl<T> Stopped<T> {
     /// ```
     pub fn res_or_else<E, F: FnOnce() -> E>(self, err: F) -> Result<T, E> {
         match self {
-            Stopped::Res(x)    => Ok(x),
+            Stopped::Res(x) => Ok(x),
             Stopped::StopOr(x) => Ok(x),
-            Stopped::Stop      => Err(err()),
+            Stopped::Stop => Err(err()),
         }
     }
-
 
     /// Transforms the [`Stopped<T>`] into an [`Option<T>`], mapping [`Res(v)`]
     /// or [`StopOr(v)`] into [`Some(v)`] and [`Stop`] into [`None`].
@@ -512,29 +497,28 @@ impl<T> Stopped<T> {
     /// ```
     pub fn into_option(self) -> Option<T> {
         match self {
-            Stopped::Res(x)    => Some(x),
+            Stopped::Res(x) => Some(x),
             Stopped::StopOr(x) => Some(x),
-            Stopped::Stop      => None,
+            Stopped::Stop => None,
         }
     }
 }
 
-
 impl<T> Default for Stopped<T> {
     #[inline]
-    fn default() -> Stopped<T> { Stopped::Stop }
+    fn default() -> Stopped<T> {
+        Stopped::Stop
+    }
 }
-
 
 impl<T> From<Option<T>> for Stopped<T> {
     fn from(t: Option<T>) -> Stopped<T> {
         match t {
             Some(x) => Stopped::Res(x),
-            None    => Stopped::Stop,
+            None => Stopped::Stop,
         }
     }
 }
-
 
 impl<T> Into<Option<T>> for Stopped<T> {
     fn into(self) -> Option<T> {
@@ -542,9 +526,9 @@ impl<T> Into<Option<T>> for Stopped<T> {
     }
 }
 
-
 impl<'a, T> TryFrom<&'a u8> for Stopped<T>
-    where T: TryFrom<&'a u8>
+where
+    T: TryFrom<&'a u8>,
 {
     type Error = T::Error;
 
@@ -569,11 +553,10 @@ impl<'a, T> TryFrom<&'a u8> for Stopped<T>
     fn try_from(base: &'a u8) -> Result<Self, Self::Error> {
         match base {
             b'*' => Ok(Stopped::Stop),
-            a    => T::try_from(a).map(Stopped::Res),
+            a => T::try_from(a).map(Stopped::Res),
         }
     }
 }
-
 
 impl<T: TryFrom<u8>> TryFrom<u8> for Stopped<T> {
     type Error = T::Error;
@@ -581,14 +564,14 @@ impl<T: TryFrom<u8>> TryFrom<u8> for Stopped<T> {
     fn try_from(base: u8) -> Result<Self, Self::Error> {
         match base {
             b'*' => Ok(Stopped::Stop),
-            a    => T::try_from(a).map(Stopped::Res),
+            a => T::try_from(a).map(Stopped::Res),
         }
     }
 }
 
-
 impl<'a, T> TryFrom<&'a char> for Stopped<T>
-    where T: TryFrom<&'a char>
+where
+    T: TryFrom<&'a char>,
 {
     type Error = T::Error;
 
@@ -613,11 +596,10 @@ impl<'a, T> TryFrom<&'a char> for Stopped<T>
     fn try_from(base: &'a char) -> Result<Self, Self::Error> {
         match base {
             '*' => Ok(Stopped::Stop),
-            a   => T::try_from(a).map(Stopped::Res),
+            a => T::try_from(a).map(Stopped::Res),
         }
     }
 }
-
 
 impl<T: TryFrom<char>> TryFrom<char> for Stopped<T> {
     type Error = T::Error;
@@ -625,14 +607,12 @@ impl<T: TryFrom<char>> TryFrom<char> for Stopped<T> {
     fn try_from(base: char) -> Result<Self, Self::Error> {
         match base {
             '*' => Ok(Stopped::Stop),
-            a   => T::try_from(a).map(Stopped::Res),
+            a => T::try_from(a).map(Stopped::Res),
         }
     }
 }
 
-
 impl<T: Into<u8> + Copy> From<&Stopped<T>> for u8 {
-
     /// Convert Stopped alphabet to byte representation.
     ///
     /// # Examples:
@@ -653,29 +633,25 @@ impl<T: Into<u8> + Copy> From<&Stopped<T>> for u8 {
     /// ```
     fn from(base: &Stopped<T>) -> Self {
         match base {
-            Stopped::Res(x)    => (*x).into(),
+            Stopped::Res(x) => (*x).into(),
             Stopped::StopOr(x) => (*x).into(),
-            Stopped::Stop      => b'*',
+            Stopped::Stop => b'*',
         }
     }
 }
 
-
 impl<T: Into<u8> + Copy> From<Stopped<T>> for u8 {
-
     /// Convert Stopped alphabet to byte representation.
     fn from(base: Stopped<T>) -> Self {
         match base {
-            Stopped::Res(x)    => x.into(),
+            Stopped::Res(x) => x.into(),
             Stopped::StopOr(x) => x.into(),
-            Stopped::Stop      => b'*',
+            Stopped::Stop => b'*',
         }
     }
 }
 
-
 impl<T: Into<char> + Copy> From<&Stopped<T>> for char {
-
     /// Convert Stopped alphabet to byte representation.
     ///
     /// # Examples:
@@ -696,36 +672,33 @@ impl<T: Into<char> + Copy> From<&Stopped<T>> for char {
     /// ```
     fn from(base: &Stopped<T>) -> Self {
         match base {
-            Stopped::Res(x)    => (*x).into(),
+            Stopped::Res(x) => (*x).into(),
             Stopped::StopOr(x) => (*x).into(),
-            Stopped::Stop      => '*',
+            Stopped::Stop => '*',
         }
     }
 }
 
-
 impl<T: Into<char> + Copy> From<Stopped<T>> for char {
-
     /// Convert Stopped alphabet to byte representation.
     fn from(base: Stopped<T>) -> Self {
         match base {
-            Stopped::Res(x)    => x.into(),
+            Stopped::Res(x) => x.into(),
             Stopped::StopOr(x) => x.into(),
-            Stopped::Stop      => '*',
+            Stopped::Stop => '*',
         }
     }
 }
 
-
 impl<T> fmt::Display for Stopped<T>
-    where Stopped<T>: Into<char>,
-          T: Into<char> + Copy
+where
+    Stopped<T>: Into<char>,
+    T: Into<char> + Copy,
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", char::from(self))
     }
 }
-
 
 #[cfg(test)]
 mod tests {

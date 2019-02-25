@@ -1,12 +1,10 @@
-/// A generalised codon alphabet.
-
-use crate::translate::TranslationTable;
-use crate::translate::CodonTagTable;
 use crate::errors::{SeqError, SeqErrorKind};
+use crate::translate::CodonTagTable;
+/// A generalised codon alphabet.
+use crate::translate::TranslationTable;
 
 use std::convert::{TryFrom, TryInto};
 use std::str::FromStr;
-
 
 /// Codons represented as tuple struct.
 /// The tuple struct with public fields is used to make pattern matching
@@ -16,32 +14,26 @@ use std::str::FromStr;
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Codon<T>(pub T, pub T, pub T);
 
-
 impl<T> Codon<T> {
-
     /// Constructor function.
     pub fn new(first: T, second: T, third: T) -> Self {
         Codon(first, second, third)
     }
-
 
     /// Returns the first codon base.
     pub fn first<'a>(&'a self) -> &'a T {
         &self.0
     }
 
-
     /// Returns the second codon base.
     pub fn second<'a>(&'a self) -> &'a T {
         &self.1
     }
 
-
     /// Returns the third codon base.
     pub fn third<'a>(&'a self) -> &'a T {
         &self.2
     }
-
 
     /// Translates a [`Codon`] into an amino acid, using the mapping defined in
     /// some type implementing [`TranslationTable`].
@@ -82,11 +74,11 @@ impl<T> Codon<T> {
     /// ```
     #[inline]
     pub fn translate<'a, U, V>(&'a self, table: &U) -> V
-        where U: TranslationTable<&'a Codon<T>, V>
+    where
+        U: TranslationTable<&'a Codon<T>, V>,
     {
         table.get(self)
     }
-
 
     /// Gets the translation codon tag using the mapping defined in some type
     /// implementing [`CodonTagTable`]. The tags are related to the translation
@@ -122,11 +114,11 @@ impl<T> Codon<T> {
     /// ```
     #[inline]
     pub fn tag<'a, U, V>(&'a self, table: &U) -> V
-        where U: CodonTagTable<&'a Codon<T>, V>
+    where
+        U: CodonTagTable<&'a Codon<T>, V>,
     {
         table.get_tag(self)
     }
-
 
     /// Converts from [`Codon<T>`] to [`Codon<&T>`].
     ///
@@ -162,7 +154,6 @@ impl<T> Codon<T> {
         Codon(one, two, three)
     }
 
-
     /// Converts from [`Codon<T>`] to [`Codon<&mut T>`].
     ///
     /// [`Codon<T>`]: struct.Codon.html
@@ -185,7 +176,6 @@ impl<T> Codon<T> {
         let Codon(ref mut one, ref mut two, ref mut three) = *self;
         Codon(one, two, three)
     }
-
 
     /// Applies a function taking and returning a 3-tuple to the elements of
     /// the [`Codon`] object.
@@ -210,7 +200,6 @@ impl<T> Codon<T> {
         Codon(one, two, three)
     }
 
-
     /// Applies a function taking a 3-tuple and returning a [`Codon`] object
     /// over the [`Codon`] object.
     ///
@@ -233,7 +222,6 @@ impl<T> Codon<T> {
         f(one, two, three)
     }
 
-
     /// Applies a function over each of the [`Codon`] bases individually.
     ///
     /// [`Codon`]: struct.Codon.html
@@ -254,9 +242,7 @@ impl<T> Codon<T> {
     }
 }
 
-
 impl<T: Default> Default for Codon<T> {
-
     /// Returns codon with contained types defaults.
     ///
     /// Examples:
@@ -274,9 +260,9 @@ impl<T: Default> Default for Codon<T> {
     }
 }
 
-
 impl<T> FromStr for Codon<T>
-    where T: TryFrom<char, Error=SeqError>,
+where
+    T: TryFrom<char, Error = SeqError>,
 {
     type Err = SeqError;
 
@@ -291,7 +277,6 @@ impl<T> FromStr for Codon<T>
     }
 }
 
-
 /// Yields a iterator over elements wrapped in [`Codon`].
 pub trait Codons<I> {
     type Item;
@@ -300,19 +285,20 @@ pub trait Codons<I> {
     fn codons(self) -> CodonsIterator<I>;
 }
 
-
 impl<I, T, U> Codons<I> for U
-    where U: IntoIterator<Item=T, IntoIter=I>,
-          I: Iterator<Item=T>,
+where
+    U: IntoIterator<Item = T, IntoIter = I>,
+    I: Iterator<Item = T>,
 {
     type Item = T;
     type Iter = I;
 
     fn codons(self) -> CodonsIterator<I> {
-        CodonsIterator{ iter: self.into_iter() }
+        CodonsIterator {
+            iter: self.into_iter(),
+        }
     }
 }
-
 
 /// An iterator over
 #[derive(Debug, Clone)]
@@ -320,9 +306,9 @@ pub struct CodonsIterator<I> {
     iter: I,
 }
 
-
 impl<I, T> Iterator for CodonsIterator<I>
-    where I: Iterator<Item=T>,
+where
+    I: Iterator<Item = T>,
 {
     type Item = Codon<T>;
 
@@ -366,9 +352,9 @@ impl<I, T> Iterator for CodonsIterator<I>
     }
 }
 
-
 impl<I, T> DoubleEndedIterator for CodonsIterator<I>
-    where I: DoubleEndedIterator<Item=T> + ExactSizeIterator<Item=T>,
+where
+    I: DoubleEndedIterator<Item = T> + ExactSizeIterator<Item = T>,
 {
     #[inline]
     fn next_back(&mut self) -> Option<Self::Item> {
@@ -385,9 +371,9 @@ impl<I, T> DoubleEndedIterator for CodonsIterator<I>
     }
 }
 
-
 impl<I, T> ExactSizeIterator for CodonsIterator<I>
-    where I: ExactSizeIterator<Item=T>,
+where
+    I: ExactSizeIterator<Item = T>,
 {
     #[inline]
     fn len(&self) -> usize {
@@ -400,18 +386,15 @@ impl<I, T> ExactSizeIterator for CodonsIterator<I>
     }
 }
 
-
-
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::alphabet::AA;
     use crate::alphabet::DNA;
     use crate::alphabet::DNA::*;
-    use crate::translate::NCBITransTable;
     use crate::stopped::Stopped;
     use crate::stopped::Stopped::{Res, Stop};
-    use crate::alphabet::AA;
-
+    use crate::translate::NCBITransTable;
 
     #[test]
     fn test_codon_from_str() {
@@ -475,4 +458,3 @@ mod tests {
         assert_eq!(mapped, vec![Res(AA::M), Res(AA::L), Stop]);
     }
 }
-

@@ -26,9 +26,7 @@ pub enum Gapped<T> {
     Base(T),
 }
 
-
 impl<T> Gapped<T> {
-
     /// Returns true if is [`Base`] option.
     ///
     /// [`Base`]: #variant.Base
@@ -53,7 +51,6 @@ impl<T> Gapped<T> {
         }
     }
 
-
     /// Returns true if is [`Gap`] option.
     ///
     /// [`Gap`]: #variant.Gap
@@ -74,7 +71,6 @@ impl<T> Gapped<T> {
     pub fn is_gap(&self) -> bool {
         !self.is_base()
     }
-
 
     /// Converts from [`Gapped<T>`] to [`Gapped<&T>`].
     ///
@@ -111,7 +107,6 @@ impl<T> Gapped<T> {
         }
     }
 
-
     /// Converts from [`Gapped<T>`] to [`Gapped<&mut T>`].
     ///
     /// [`Gapped<T>`]: enum.Gapped.html
@@ -137,7 +132,6 @@ impl<T> Gapped<T> {
             Gapped::Gap => Gapped::Gap,
         }
     }
-
 
     /// Unwraps a [`Gapped`], yielding the content of a [`Base`].
     ///
@@ -172,7 +166,6 @@ impl<T> Gapped<T> {
             Gapped::Gap => panic!("{}", msg),
         }
     }
-
 
     /// Moves the value `v` out of the [`Gapped<T>`] if it is [`Base(v)`].
     ///
@@ -211,7 +204,6 @@ impl<T> Gapped<T> {
         }
     }
 
-
     /// Returns the contained value or a default.
     ///
     /// Arguments passed to [`unwrap_or`] are eagerly evaluated; if you are passing
@@ -237,7 +229,6 @@ impl<T> Gapped<T> {
         }
     }
 
-
     /// Returns the contained value or computes it from a closure.
     ///
     /// # Examples
@@ -255,7 +246,6 @@ impl<T> Gapped<T> {
             Gapped::Gap => f(),
         }
     }
-
 
     /// Maps a [`Gapped<T>`] to [`Gapped<U>`] by applying a function to
     /// a contained value.
@@ -285,7 +275,6 @@ impl<T> Gapped<T> {
         }
     }
 
-
     /// Applies a function to the contained value (if any),
     /// or returns the provided default (if not).
     ///
@@ -309,7 +298,6 @@ impl<T> Gapped<T> {
         }
     }
 
-
     /// Applies a function to the contained value (if any),
     /// or computes a default (if not).
     ///
@@ -330,7 +318,6 @@ impl<T> Gapped<T> {
             Gapped::Gap => default(),
         }
     }
-
 
     /// Applies a function that returns a [`Gapped`] value to the wrapped value.
     ///
@@ -364,7 +351,6 @@ impl<T> Gapped<T> {
     pub fn flat_map<U, F: FnOnce(T) -> Gapped<U>>(self, f: F) -> Gapped<U> {
         self.map_or(Gapped::Gap, f)
     }
-
 
     /// Transforms the [`Gapped<T>`] into a [`Result<T, E>`], mapping [`Base(v)`] to
     /// [`Ok(v)`] and [`Gap`] to [`Err(err)`].
@@ -402,7 +388,6 @@ impl<T> Gapped<T> {
         }
     }
 
-
     /// Transforms the [`Gapped<T>`] into a [`Result<T, E>`], mapping
     /// [`Base(v)`] to [`Ok(v)`] and [`Gap`] to [`Err(err())`].
     ///
@@ -433,7 +418,6 @@ impl<T> Gapped<T> {
         }
     }
 
-
     /// Transforms the [`Gapped<T>`] into an [`Option<T>`], mapping [`Base(v)`]
     /// into [`Some(v)`] and [`Gap`] into [`None`].
     ///
@@ -459,41 +443,40 @@ impl<T> Gapped<T> {
     pub fn into_option(self) -> Option<T> {
         match self {
             Gapped::Base(v) => Some(v),
-            Gapped::Gap     => None,
+            Gapped::Gap => None,
         }
     }
 }
 
-
 impl<T> Default for Gapped<T> {
     /// Returns [`Gap`][Gapped::Gap].
     #[inline]
-    fn default() -> Gapped<T> { Gapped::Gap }
+    fn default() -> Gapped<T> {
+        Gapped::Gap
+    }
 }
-
 
 impl<T> From<Option<T>> for Gapped<T> {
     fn from(t: Option<T>) -> Gapped<T> {
         match t {
             Some(base) => Gapped::Base(base),
-            None       => Gapped::Gap,
+            None => Gapped::Gap,
         }
     }
 }
-
 
 impl<T> Into<Option<T>> for Gapped<T> {
     fn into(self) -> Option<T> {
         match self {
             Gapped::Base(base) => Some(base),
-            Gapped::Gap        => None,
+            Gapped::Gap => None,
         }
     }
 }
 
-
 impl<'a, T> TryFrom<&'a u8> for Gapped<T>
-    where T: TryFrom<&'a u8>
+where
+    T: TryFrom<&'a u8>,
 {
     type Error = T::Error;
 
@@ -518,11 +501,10 @@ impl<'a, T> TryFrom<&'a u8> for Gapped<T>
     fn try_from(base: &'a u8) -> Result<Self, Self::Error> {
         match base {
             b'-' => Ok(Gapped::Gap),
-            a    => T::try_from(a).map(Gapped::Base),
+            a => T::try_from(a).map(Gapped::Base),
         }
     }
 }
-
 
 impl<T: TryFrom<u8>> TryFrom<u8> for Gapped<T> {
     type Error = T::Error;
@@ -531,11 +513,10 @@ impl<T: TryFrom<u8>> TryFrom<u8> for Gapped<T> {
     fn try_from(base: u8) -> Result<Self, Self::Error> {
         match base {
             b'-' => Ok(Gapped::Gap),
-            a    => T::try_from(a).map(Gapped::Base),
+            a => T::try_from(a).map(Gapped::Base),
         }
     }
 }
-
 
 impl<'a, T: TryFrom<&'a char>> TryFrom<&'a char> for Gapped<T> {
     type Error = T::Error;
@@ -561,11 +542,10 @@ impl<'a, T: TryFrom<&'a char>> TryFrom<&'a char> for Gapped<T> {
     fn try_from(base: &'a char) -> Result<Self, Self::Error> {
         match base {
             '-' => Ok(Gapped::Gap),
-            a   => T::try_from(a).map(Gapped::Base),
+            a => T::try_from(a).map(Gapped::Base),
         }
     }
 }
-
 
 impl<T: TryFrom<char>> TryFrom<char> for Gapped<T> {
     type Error = T::Error;
@@ -574,14 +554,12 @@ impl<T: TryFrom<char>> TryFrom<char> for Gapped<T> {
     fn try_from(base: char) -> Result<Self, Self::Error> {
         match base {
             '-' => Ok(Gapped::Gap),
-            a   => T::try_from(a).map(Gapped::Base),
+            a => T::try_from(a).map(Gapped::Base),
         }
     }
 }
 
-
 impl<T: Into<u8> + Copy> From<&Gapped<T>> for u8 {
-
     /// Convert gapped alphabet to byte representation.
     ///
     /// # Examples:
@@ -603,26 +581,22 @@ impl<T: Into<u8> + Copy> From<&Gapped<T>> for u8 {
     fn from(base: &Gapped<T>) -> Self {
         match base {
             Gapped::Base(x) => (*x).into(),
-            Gapped::Gap     => b'-',
+            Gapped::Gap => b'-',
         }
     }
 }
 
-
 impl<T: Into<u8> + Copy> From<Gapped<T>> for u8 {
-
     /// Convert gapped alphabet to byte representation.
     fn from(base: Gapped<T>) -> Self {
         match base {
             Gapped::Base(x) => x.into(),
-            Gapped::Gap     => b'-',
+            Gapped::Gap => b'-',
         }
     }
 }
 
-
 impl<T: Into<char> + Copy> From<&Gapped<T>> for char {
-
     /// Convert gapped alphabet to char representation.
     ///
     /// # Examples:
@@ -649,9 +623,7 @@ impl<T: Into<char> + Copy> From<&Gapped<T>> for char {
     }
 }
 
-
 impl<T: Into<char> + Copy> From<Gapped<T>> for char {
-
     /// Convert gapped alphabet to char representation.
     fn from(base: Gapped<T>) -> Self {
         match base {
@@ -661,16 +633,15 @@ impl<T: Into<char> + Copy> From<Gapped<T>> for char {
     }
 }
 
-
 impl<T> fmt::Display for Gapped<T>
-    where Gapped<T>: Into<char>,
-          T: Into<char> + Copy
+where
+    Gapped<T>: Into<char>,
+    T: Into<char> + Copy,
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", char::from(self))
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -678,8 +649,8 @@ mod tests {
     //! There are a couple of odd type hints required here that I'd like to
     //! get rid of.
 
-    use super::*;
     use super::Gapped::*;
+    use super::*;
     use crate::alphabet::DNA;
 
     use std::convert::TryInto;
@@ -695,7 +666,10 @@ mod tests {
 
         assert_eq!(Gapped::<DNA>::try_from(b'T').unwrap(), Gapped::Base(DNA::T));
         assert_eq!(Gapped::<DNA>::try_from(b'-').unwrap(), Gapped::Gap);
-        assert_eq!(Gapped::<DNA>::try_from(&b'T').unwrap(), Gapped::Base(DNA::T));
+        assert_eq!(
+            Gapped::<DNA>::try_from(&b'T').unwrap(),
+            Gapped::Base(DNA::T)
+        );
         assert_eq!(Gapped::<DNA>::try_from(&b'-').unwrap(), Gapped::Gap);
 
         assert_eq!(u8::from(Gapped::Base(DNA::T)), b'T');
@@ -711,9 +685,7 @@ mod tests {
 
     #[test]
     fn test_from_iter() {
-        let seq: Result<Vec<Gapped<DNA>>, _> = "ATG-N".bytes()
-            .map(|b| b.try_into())
-            .collect();
+        let seq: Result<Vec<Gapped<DNA>>, _> = "ATG-N".bytes().map(|b| b.try_into()).collect();
 
         assert_eq!(
             seq.unwrap(),
@@ -722,4 +694,3 @@ mod tests {
     }
 
 }
-

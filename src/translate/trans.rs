@@ -1,6 +1,5 @@
 use std::marker::PhantomData;
 
-
 /// TranslationTable is a wrapper around some mapping function.
 ///
 /// TranslationTable is implemented for 'tag' structs to allow different table
@@ -9,25 +8,23 @@ pub trait TranslationTable<K, V> {
     fn get(&self, k: K) -> V;
 }
 
-
 pub trait IntoTranslate<O, T>: Sized {
     fn translate(self, table: T) -> Translate<Self, T, O>;
 }
 
-
 impl<O, T, I> IntoTranslate<O, T> for I
-    where T: TranslationTable<I::Item, O>,
-          I: Iterator
+where
+    T: TranslationTable<I::Item, O>,
+    I: Iterator,
 {
     fn translate(self, table: T) -> Translate<Self, T, O> {
         Translate {
             iter: self,
             table: table,
-            b: PhantomData
+            b: PhantomData,
         }
     }
 }
-
 
 #[derive(Debug, Clone)]
 pub struct Translate<I, T, O> {
@@ -36,10 +33,10 @@ pub struct Translate<I, T, O> {
     b: PhantomData<O>,
 }
 
-
 impl<O, I, T> Iterator for Translate<I, T, O>
-    where I: Iterator,
-          T: TranslationTable<I::Item, O>
+where
+    I: Iterator,
+    T: TranslationTable<I::Item, O>,
 {
     type Item = O;
 
@@ -54,10 +51,10 @@ impl<O, I, T> Iterator for Translate<I, T, O>
     }
 }
 
-
 impl<O, I, T> DoubleEndedIterator for Translate<I, T, O>
-    where I: DoubleEndedIterator,
-          T: TranslationTable<I::Item, O>,
+where
+    I: DoubleEndedIterator,
+    T: TranslationTable<I::Item, O>,
 {
     #[inline]
     fn next_back(&mut self) -> Option<O> {
@@ -65,10 +62,10 @@ impl<O, I, T> DoubleEndedIterator for Translate<I, T, O>
     }
 }
 
-
 impl<O, I, T> ExactSizeIterator for Translate<I, T, O>
-    where I: ExactSizeIterator,
-          T: TranslationTable<I::Item, O>,
+where
+    I: ExactSizeIterator,
+    T: TranslationTable<I::Item, O>,
 {
     #[inline]
     fn len(&self) -> usize {
@@ -81,33 +78,25 @@ impl<O, I, T> ExactSizeIterator for Translate<I, T, O>
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
     use super::IntoTranslate;
-    use crate::translate::NCBITransTable;
-    use crate::alphabet::DNA::*;
     use crate::alphabet::AA;
-    use crate::stopped::Stopped;
-    use crate::stopped::Stopped::{Res, Stop};
+    use crate::alphabet::DNA::*;
     use crate::codon::Codon;
     use crate::gapped::Gapped;
-    use crate::gapped::Gapped::{Gap, Base};
-
+    use crate::gapped::Gapped::{Base, Gap};
+    use crate::stopped::Stopped;
+    use crate::stopped::Stopped::{Res, Stop};
+    use crate::translate::NCBITransTable;
 
     #[test]
     fn test_trans_table_ownership() {
-        assert_eq!(
-            NCBITransTable::Standard.get(&Codon(A, T, G)),
-            Res(AA::M)
-        );
+        assert_eq!(NCBITransTable::Standard.get(&Codon(A, T, G)), Res(AA::M));
 
-        assert_eq!(
-            NCBITransTable::Standard.get(Codon(A, T, G)),
-            Res(AA::M)
-        );
+        assert_eq!(NCBITransTable::Standard.get(Codon(A, T, G)), Res(AA::M));
 
         assert_eq!(
             NCBITransTable::Standard.get(&Base(Codon(A, T, G))),
@@ -120,63 +109,44 @@ mod tests {
         );
     }
 
-
     #[test]
     fn test_translate_iter() {
-        let arr = vec![
-            Codon(A, T, G),
-            Codon(T, A, A),
-        ];
+        let arr = vec![Codon(A, T, G), Codon(T, A, A)];
 
-        let trans: Vec<Stopped<AA>> = arr.iter()
-            .translate(NCBITransTable::Standard)
-            .collect();
+        let trans: Vec<Stopped<AA>> = arr.iter().translate(NCBITransTable::Standard).collect();
 
         assert_eq!(trans, vec![Res(AA::M), Stop]);
         println!("I can still use this {:?}", arr);
     }
 
-
     #[test]
     fn test_translate_into_iter() {
-        let arr = vec![
-            Codon(A, T, G),
-            Codon(T, A, A),
-        ];
+        let arr = vec![Codon(A, T, G), Codon(T, A, A)];
 
-        let trans: Vec<Stopped<AA>> = arr.into_iter()
+        let trans: Vec<Stopped<AA>> = arr
+            .into_iter()
             .translate(NCBITransTable::Standard)
             .collect();
 
         assert_eq!(trans, vec![Res(AA::M), Stop]);
     }
 
-
     #[test]
     fn test_translate_iter_gapped() {
-        let arr = vec![
-            Base(Codon(A, T, G)),
-            Gap,
-            Base(Codon(T, A, A)),
-        ];
+        let arr = vec![Base(Codon(A, T, G)), Gap, Base(Codon(T, A, A))];
 
-        let trans: Vec<Gapped<Stopped<AA>>> = arr.iter()
-            .translate(NCBITransTable::Standard)
-            .collect();
+        let trans: Vec<Gapped<Stopped<AA>>> =
+            arr.iter().translate(NCBITransTable::Standard).collect();
         assert_eq!(trans, vec![Base(Res(AA::M)), Gap, Base(Stop)]);
         println!("I can still use this {:?}", arr);
     }
 
-
     #[test]
     fn test_translate_into_iter_gapped() {
-        let arr = vec![
-            Base(Codon(A, T, G)),
-            Gap,
-            Base(Codon(T, A, A)),
-        ];
+        let arr = vec![Base(Codon(A, T, G)), Gap, Base(Codon(T, A, A))];
 
-        let trans: Vec<Gapped<Stopped<AA>>> = arr.into_iter()
+        let trans: Vec<Gapped<Stopped<AA>>> = arr
+            .into_iter()
             .translate(NCBITransTable::Standard)
             .collect();
         assert_eq!(trans, vec![Base(Res(AA::M)), Gap, Base(Stop)]);
