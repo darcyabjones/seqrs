@@ -15,6 +15,8 @@ pub enum SeqErrorKind {
     AlphabetReadError { base: char },
     #[fail(display = "String must contain 3 characters to be parsed into codon.")]
     CodonFromStrTooShort,
+    #[fail(display = "Cannot convert redundant character {} into non-redundant alphabet.", base)]
+    RedundantAlphabetConversionError { base: char },
 }
 
 impl Fail for SeqError {

@@ -3,6 +3,7 @@ use crate::complement::Complement;
 use crate::errors::{SeqError, SeqErrorKind};
 use crate::gapped::Gapped;
 use crate::matcher::{Match, RedundantAlphabet};
+use crate::alphabet::DNA4;
 
 use std::convert::TryFrom;
 
@@ -278,6 +279,24 @@ impl RedundantAlphabet for DNA {
     }
 }
 
+
+impl From<&DNA4> for DNA {
+    fn from(base: &DNA4) -> Self {
+        let a = *base as u8;
+        let b: u8 = 0b0001 << a;
+
+        unsafe { std::mem::transmute::<u8, DNA>(b) }
+    }
+}
+
+
+impl From<DNA4> for DNA {
+    fn from(base: DNA4) -> Self {
+        (&base).into()
+    }
+}
+
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -354,6 +373,15 @@ mod tests {
     #[test]
     fn test_cardinality() {
         assert_eq!(DNA::cardinality(), 15);
+    }
+
+
+    #[test]
+    fn test_from_dna4() {
+        assert_eq!(DNA::from(DNA4::A), DNA::A);
+        assert_eq!(DNA::from(DNA4::T), DNA::T);
+        assert_eq!(DNA::from(DNA4::G), DNA::G);
+        assert_eq!(DNA::from(DNA4::C), DNA::C);
     }
 
     proptest! {
