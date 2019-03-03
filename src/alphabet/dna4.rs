@@ -1,11 +1,14 @@
+//! A standard non-redundant DNA alphabet.
+
+use crate::alphabet::DNA;
 use crate::complement::Complement;
 use crate::errors::{SeqError, SeqErrorKind};
 use crate::gapped::Gapped;
 use crate::matcher::{Match, RedundantAlphabet};
-use crate::alphabet::DNA;
 
 use std::convert::TryFrom;
 
+/// A Non-redundant four letter DNA alphabet.
 #[repr(u8)]
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Copy, Clone)]
 pub enum DNA4 {
@@ -16,6 +19,7 @@ pub enum DNA4 {
 }
 
 impl DNA4 {
+    /// The names of the DNA bases.
     pub fn name(&self) -> String {
         match &self {
             DNA4::A => String::from("Alanine"),
@@ -25,22 +29,23 @@ impl DNA4 {
         }
     }
 
+    /// Returns a Vec of all of the Enum variants.
     pub fn variants() -> Vec<Self> {
         vec![DNA4::A, DNA4::C, DNA4::G, DNA4::T]
     }
 
+    /// The number of letters in this alphabet.
     pub fn cardinality() -> usize {
         4
     }
-
 }
 
+/// DNA4 can dereference from a borrowed, because it's Copy.
 impl From<&DNA4> for DNA4 {
     fn from(b: &Self) -> Self {
         *b
     }
 }
-
 
 impl TryFrom<&u8> for DNA4 {
     type Error = SeqError;
@@ -161,7 +166,10 @@ impl TryFrom<&DNA> for DNA4 {
         let a = *base as u8;
         // If DNA has more than 1 bit set it's redundant, so not representable.
         if a.count_ones() > 1 {
-            Err(SeqErrorKind::RedundantAlphabetConversionError { base: char::from(base) }.into())
+            Err(SeqErrorKind::RedundantAlphabetConversionError {
+                base: char::from(base),
+            }
+            .into())
         } else {
             // This is effectively the log2.
             // DNA and DNA4 are arranged so that they have this exponent relationship.
@@ -214,8 +222,8 @@ mod tests {
 
     #[test]
     fn test_gapped_complement_iter() {
-        use crate::gapped::Gapped::{Base, Gap};
         use super::DNA4::*;
+        use crate::gapped::Gapped::{Base, Gap};
 
         let seq = vec![Base(A), Base(T), Gap, Base(G)];
         let comp: Vec<Gapped<DNA4>> = seq.into_iter().reverse_complement().collect();

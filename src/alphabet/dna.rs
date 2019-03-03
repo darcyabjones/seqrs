@@ -1,12 +1,14 @@
+//! A fully redundant DNA alphabet.
+
+use crate::alphabet::DNA4;
 use crate::complement::Complement;
-/// A fully redundant DNA alphabet.
 use crate::errors::{SeqError, SeqErrorKind};
 use crate::gapped::Gapped;
 use crate::matcher::{Match, RedundantAlphabet};
-use crate::alphabet::DNA4;
 
 use std::convert::TryFrom;
 
+/// A fully redundant DNA alphabet represented as an enum.
 #[repr(u8)]
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Copy, Clone)]
 pub enum DNA {
@@ -28,6 +30,7 @@ pub enum DNA {
 }
 
 impl DNA {
+    /// The names of the bases or redundant bases.
     pub fn name(&self) -> String {
         match &self {
             DNA::A => String::from("Alanine"),
@@ -48,6 +51,7 @@ impl DNA {
         }
     }
 
+    /// Returns a Vec of all of the Enum variants.
     pub fn variants() -> Vec<Self> {
         vec![
             DNA::A,
@@ -68,10 +72,13 @@ impl DNA {
         ]
     }
 
+    /// The number of letters in this alphabet.
     pub fn cardinality() -> usize {
         15
     }
 
+    /// For redundant matches, returns a vec of each non-redundant
+    /// base that it contains.
     fn redundant_matches(&self) -> Vec<Self> {
         use super::DNA::*;
         match self {
@@ -279,7 +286,6 @@ impl RedundantAlphabet for DNA {
     }
 }
 
-
 impl From<&DNA4> for DNA {
     fn from(base: &DNA4) -> Self {
         let a = *base as u8;
@@ -289,13 +295,11 @@ impl From<&DNA4> for DNA {
     }
 }
 
-
 impl From<DNA4> for DNA {
     fn from(base: DNA4) -> Self {
         (&base).into()
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -374,7 +378,6 @@ mod tests {
     fn test_cardinality() {
         assert_eq!(DNA::cardinality(), 15);
     }
-
 
     #[test]
     fn test_from_dna4() {

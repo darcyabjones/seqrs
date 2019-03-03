@@ -544,10 +544,10 @@ where
     /// use seqrs::aastop::Stopped;
     /// use std::convert::{TryFrom, TryInto};
     ///
-    /// let base = Stopped<AA>::try_from(b'a').unwrap();
+    /// let base = Stopped::<AA>::try_from(b'a').unwrap();
     /// assert_eq!(base, Stopped::Res(AA::A));
     ///
-    /// let stop = Stopped<AA>::try_from(b'*').unwrap();
+    /// let stop = Stopped::<AA>::try_from(b'*').unwrap();
     /// assert_eq!(stop, Stopped::Stop);
     /// ```
     fn try_from(base: &'a u8) -> Result<Self, Self::Error> {
@@ -587,10 +587,10 @@ where
     /// use seqrs::aastop::Stopped;
     /// use std::convert::{TryFrom, TryInto};
     ///
-    /// let base = Stopped<AA>::try_from('a').unwrap();
+    /// let base = Stopped::<AA>::try_from('a').unwrap();
     /// assert_eq!(base, Stopped::Res(AA::A));
     ///
-    /// let stop = Stopped<AA>::try_from('*').unwrap();
+    /// let stop = Stopped::<AA>::try_from('*').unwrap();
     /// assert_eq!(stop, Stopped::Stop);
     /// ```
     fn try_from(base: &'a char) -> Result<Self, Self::Error> {
@@ -705,6 +705,11 @@ mod tests {
 
     use super::*;
     use crate::alphabet::AA;
+
+    #[test]
+    fn test_size() {
+        assert_eq!(std::mem::size_of::<Stopped<AA>>(), 2);
+    }
 
     #[test]
     fn test_from() {

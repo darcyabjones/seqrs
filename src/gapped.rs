@@ -484,18 +484,15 @@ where
     ///
     /// # Examples:
     ///
-    /// WARNING: try_from is currently unstable, so this example cannot be
-    /// tested.
-    ///
     /// ```rust,ignore
     /// use seqrs::alphabet::DNA;
     /// use seqrs::gapped::Gapped;
     /// use std::convert::{TryFrom, TryInto};
     ///
-    /// let base = Gapped<DNA>::try_from(b'a').unwrap();
+    /// let base = Gapped::<DNA>::try_from(b'a').unwrap();
     /// assert_eq!(base, Gapped::Base(DNA::A));
     ///
-    /// let base = Gapped<DNA>::try_from(b'-').unwrap();
+    /// let base = Gapped::<DNA>::try_from(b'-').unwrap();
     /// assert_eq!(base, Gapped::Gap);
     /// ```
     fn try_from(base: &'a u8) -> Result<Self, Self::Error> {
@@ -533,10 +530,10 @@ impl<'a, T: TryFrom<&'a char>> TryFrom<&'a char> for Gapped<T> {
     /// use seqrs::gapped::Gapped;
     /// use std::convert::{TryFrom, TryInto};
     ///
-    /// let base = Gapped<DNA>::try_from('a').unwrap();
+    /// let base = Gapped::<DNA>::try_from('a').unwrap();
     /// assert_eq!(base, Gapped::Base(DNA::A));
     ///
-    /// let base = Gapped<DNA>::try_from('-').unwrap();
+    /// let base = Gapped::<DNA>::try_from('-').unwrap();
     /// assert_eq!(base, Gapped::Gap);
     /// ```
     fn try_from(base: &'a char) -> Result<Self, Self::Error> {
@@ -654,6 +651,11 @@ mod tests {
     use crate::alphabet::DNA;
 
     use std::convert::TryInto;
+
+    #[test]
+    fn test_size() {
+        assert_eq!(std::mem::size_of::<Gapped<DNA>>(), 1);
+    }
 
     #[test]
     fn test_from() {

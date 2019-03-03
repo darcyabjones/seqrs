@@ -55,18 +55,45 @@
 
 use std::ops::Try;
 
+/// A trait for nucleotide complementation.
 pub trait Complement {
+    /// The type that complement should return.
+    /// This is used so that the same return type can be used for
+    /// implementations on borrowed and owned values.
     type Compl;
+
+    /// A method that returns the nucleotide complement of `self`.
     fn complement(self) -> Self::Compl;
 }
 
+/// A trait with methods to enter the reverse complement iterator adapter.
+///
+/// This trait is automatically implemented for any DoubleEndedIterator
+/// containing a type that implements complement.
+///
+/// ```
+/// // DNA implements `Complement` so `IntoReverseComplement` is implemented.
+/// use seqrs::alphabet::DNA;
+/// use seqrs::complement::{Complement, IntoReverseComplement};
+///
+/// let seq = vec![DNA::A, DNA::T, DNA::G, DNA::C];
+///
+/// // `.iter()` iterates over borrowed values, so can still use seq.
+/// let rc_seq: Vec<DNA> = seq.iter().reverse_complement().collect();
+///
+/// // `.into_iter()` iterates over owned values, so seq is consumed.
+/// let rc_seq: Vec<DNA> = seq.into_iter().reverse_complement().collect();
+///
+/// assert_eq!(rc_seq, vec![DNA::G, DNA::C, DNA::A, DNA::T]);
+/// ```
 pub trait IntoReverseComplement: Sized {
     type Iter;
 
     fn reverse_complement(self) -> ReverseComplement<Self>;
 }
 
-/// A wrapper around map and rev.
+/// A iterator adapter that maps the complement function over a sequence
+/// in reverse order.
 #[derive(Debug, Clone)]
 pub struct ReverseComplement<I> {
     iter: I,

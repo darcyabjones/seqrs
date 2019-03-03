@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 /// TranslationTable is a wrapper around some mapping function.
 ///
-/// TranslationTable is implemented for 'tag' structs to allow different table
+/// TranslationTable is implemented for 'tag' structs or enums to allow different table types
 /// behaviour.
 pub trait TranslationTable<K, V> {
     fn get(&self, k: K) -> V;

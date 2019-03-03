@@ -7,10 +7,6 @@ use std::convert::{TryFrom, TryInto};
 use std::str::FromStr;
 
 /// Codons represented as tuple struct.
-/// The tuple struct with public fields is used to make pattern matching
-/// easier. I think it's a reasonable choice, given that these should
-/// essentially be immutable and the order of codon elements has an
-/// unambiguous interpretation.
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Codon<T>(pub T, pub T, pub T);
 
@@ -277,36 +273,28 @@ where
     }
 }
 
-/// Yields a iterator over elements wrapped in [`Codon`].
-pub trait Codons<I> {
-    type Item;
-    type Iter;
+// Iterator for codons.
 
-    fn codons(self) -> CodonsIterator<I>;
+/// Yields a iterator over elements from another iterator wrapped in [`Codon`].
+///
+/// This trait is automatically implemented for any iterator.
+pub trait IntoCodons: Sized {
+    fn codons(self) -> Codons<Self>;
 }
 
-impl<I, T, U> Codons<I> for U
-where
-    U: IntoIterator<Item = T, IntoIter = I>,
-    I: Iterator<Item = T>,
-{
-    type Item = T;
-    type Iter = I;
-
-    fn codons(self) -> CodonsIterator<I> {
-        CodonsIterator {
-            iter: self.into_iter(),
-        }
+impl<I: Iterator> IntoCodons for I {
+    fn codons(self) -> Codons<I> {
+        Codons { iter: self }
     }
 }
 
-/// An iterator over
+/// An iterator adapter over codons in another iterator.
 #[derive(Debug, Clone)]
-pub struct CodonsIterator<I> {
+pub struct Codons<I> {
     iter: I,
 }
 
-impl<I, T> Iterator for CodonsIterator<I>
+impl<I, T> Iterator for Codons<I>
 where
     I: Iterator<Item = T>,
 {
@@ -327,21 +315,21 @@ where
     ///
     /// ```
     /// use seqrs::codon::Codon;
-    /// use seqrs::codon::Codons;
+    /// use seqrs::codon::IntoCodons;
     ///
-    /// let seq = vec!['A', 'A'].codons();
+    /// let seq = vec!['A', 'A'].into_iter().codons();
     /// assert_eq!((0, Some(0)), seq.size_hint());
     ///
-    /// let seq = vec!['A', 'A', 'A'].codons();
+    /// let seq = vec!['A', 'A', 'A'].into_iter().codons();
     /// assert_eq!((1, Some(1)), seq.size_hint());
     ///
-    /// let seq = vec!['A', 'A', 'A', 'A'].codons();
+    /// let seq = vec!['A', 'A', 'A', 'A'].into_iter().codons();
     /// assert_eq!((1, Some(1)), seq.size_hint());
     ///
-    /// let seq = vec!['A', 'A', 'A', 'A', 'A'].codons();
+    /// let seq = vec!['A', 'A', 'A', 'A', 'A'].into_iter().codons();
     /// assert_eq!((1, Some(1)), seq.size_hint());
     ///
-    /// let seq = vec!['A', 'A', 'A', 'A', 'A', 'A'].codons();
+    /// let seq = vec!['A', 'A', 'A', 'A', 'A', 'A'].into_iter().codons();
     /// assert_eq!((2, Some(2)), seq.size_hint());
     /// ```
     #[inline]
@@ -352,17 +340,20 @@ where
     }
 }
 
-impl<I, T> DoubleEndedIterator for CodonsIterator<I>
+impl<I, T> DoubleEndedIterator for Codons<I>
 where
     I: DoubleEndedIterator<Item = T> + ExactSizeIterator<Item = T>,
 {
     #[inline]
     fn next_back(&mut self) -> Option<Self::Item> {
+        // Because the last codon might not end at the final position
+        // Skip the last n % 3 bases.
         let n = self.iter.len() % 3;
         for _ in 0..n {
             self.iter.next_back()?;
         }
 
+        // Codon is in reverse order.
         let three = self.iter.next_back()?;
         let two = self.iter.next_back()?;
         let one = self.iter.next_back()?;
@@ -371,7 +362,7 @@ where
     }
 }
 
-impl<I, T> ExactSizeIterator for CodonsIterator<I>
+impl<I, T> ExactSizeIterator for Codons<I>
 where
     I: ExactSizeIterator<Item = T>,
 {
@@ -404,18 +395,23 @@ mod tests {
 
     #[test]
     fn test_codon_iter() {
-        let mut arr = vec![A, T, G, C].codons();
+        let mut arr = vec![A, T, G, C].into_iter().codons();
         assert_eq!(Some(Codon(A, T, G)), arr.next());
+        assert_eq!(None, arr.next());
+
+        let v = vec![A, T, G, C];
+        let mut arr = v.iter().codons();
+        assert_eq!(Some(Codon(&A, &T, &G)), arr.next());
         assert_eq!(None, arr.next());
     }
 
     #[test]
     fn test_codon_rev_iter() {
-        let mut arr = vec![A, T, G, C].codons();
+        let mut arr = vec![A, T, G, C].into_iter().codons();
         assert_eq!(Some(Codon(A, T, G)), arr.next_back());
         assert_eq!(None, arr.next_back());
 
-        let mut arr = vec![A, T, G, C, A, A, G, A].codons();
+        let mut arr = vec![A, T, G, C, A, A, G, A].into_iter().codons();
         assert_eq!(Some(Codon(C, A, A)), arr.next_back());
         assert_eq!(Some(Codon(A, T, G)), arr.next_back());
         assert_eq!(None, arr.next_back());
@@ -423,7 +419,7 @@ mod tests {
 
     #[test]
     fn test_codon_len() {
-        let mut arr = vec![A, T, G, C].codons();
+        let mut arr = vec![A, T, G, C].into_iter().codons();
         assert_eq!(1, arr.len());
         assert_eq!(false, arr.is_empty());
         let _ = arr.next();
