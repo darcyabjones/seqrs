@@ -40,75 +40,55 @@ impl DNA4 {
     }
 }
 
-/// DNA4 can dereference from a borrowed, because it's Copy.
-impl From<&DNA4> for DNA4 {
-    fn from(b: &Self) -> Self {
-        *b
-    }
-}
 
-impl TryFrom<&u8> for DNA4 {
-    type Error = SeqError;
-    fn try_from(base: &u8) -> Result<Self, Self::Error> {
-        match base.to_ascii_uppercase() {
-            b'A' => Ok(DNA4::A),
-            b'C' => Ok(DNA4::C),
-            b'G' => Ok(DNA4::G),
-            b'T' => Ok(DNA4::T),
-            b => Err(SeqErrorKind::AlphabetReadError { base: b as char }.into()),
+try_from_borrowed! {
+    impl TryFrom<&u8> for DNA4 {
+        type Error = SeqError;
+        fn try_from(base: &u8) -> Result<Self, Self::Error> {
+            match base.to_ascii_uppercase() {
+                b'A' => Ok(DNA4::A),
+                b'C' => Ok(DNA4::C),
+                b'G' => Ok(DNA4::G),
+                b'T' => Ok(DNA4::T),
+                b => Err(SeqErrorKind::AlphabetReadError { base: b as char }.into()),
+            }
         }
     }
 }
 
-impl TryFrom<u8> for DNA4 {
-    type Error = SeqError;
-    fn try_from(base: u8) -> Result<Self, Self::Error> {
-        Self::try_from(&(base))
-    }
-}
 
-impl TryFrom<&char> for DNA4 {
-    type Error = SeqError;
-    fn try_from(base: &char) -> Result<Self, Self::Error> {
-        crate::utils::char_to_byte(base).and_then(|b| Self::try_from(&b))
-    }
-}
-
-impl TryFrom<char> for DNA4 {
-    type Error = SeqError;
-    fn try_from(base: char) -> Result<Self, Self::Error> {
-        crate::utils::char_to_byte(&base).and_then(|b| Self::try_from(&b))
-    }
-}
-
-impl From<&DNA4> for u8 {
-    fn from(base: &DNA4) -> Self {
-        match base {
-            DNA4::A => b'A',
-            DNA4::C => b'C',
-            DNA4::G => b'G',
-            DNA4::T => b'T',
+try_from_borrowed! {
+    impl TryFrom<&char> for DNA4 {
+        type Error = SeqError;
+        fn try_from(base: &char) -> Result<Self, Self::Error> {
+            crate::utils::char_to_byte(base).and_then(|b| Self::try_from(&b))
         }
     }
 }
 
-impl From<DNA4> for u8 {
-    fn from(base: DNA4) -> Self {
-        (&base).into()
+
+from_borrowed! {
+    impl From<&DNA4> for u8 {
+        fn from(base: &DNA4) -> Self {
+            match base {
+                DNA4::A => b'A',
+                DNA4::C => b'C',
+                DNA4::G => b'G',
+                DNA4::T => b'T',
+            }
+        }
     }
 }
 
-impl From<&DNA4> for char {
-    fn from(base: &DNA4) -> Self {
-        u8::from(base) as char
+
+from_borrowed! {
+    impl From<&DNA4> for char {
+        fn from(base: &DNA4) -> Self {
+            u8::from(base) as char
+        }
     }
 }
 
-impl From<DNA4> for char {
-    fn from(base: DNA4) -> Self {
-        u8::from(&base) as char
-    }
-}
 
 impl std::fmt::Display for DNA4 {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -116,41 +96,13 @@ impl std::fmt::Display for DNA4 {
     }
 }
 
-impl Complement for &DNA4 {
+impl Complement for DNA4 {
     type Compl = DNA4;
-    fn complement(self) -> Self::Compl {
+    fn complement(&self) -> Self::Compl {
         let a = *self as u8;
         let comp = a ^ 0b11;
 
         unsafe { std::mem::transmute::<u8, Self::Compl>(comp) }
-    }
-}
-
-impl Complement for DNA4 {
-    type Compl = DNA4;
-    fn complement(self) -> Self::Compl {
-        (&self).complement()
-    }
-}
-
-impl Complement for &Gapped<DNA4> {
-    type Compl = Gapped<DNA4>;
-    fn complement(self) -> Self::Compl {
-        self.map(|a| a.complement())
-    }
-}
-
-impl Complement for Gapped<DNA4> {
-    type Compl = Gapped<DNA4>;
-    fn complement(self) -> Self::Compl {
-        (&self).complement()
-    }
-}
-
-impl Complement for Gapped<&DNA4> {
-    type Compl = Gapped<DNA4>;
-    fn complement(self) -> Self::Compl {
-        self.map(|a| a.complement())
     }
 }
 
@@ -160,31 +112,27 @@ impl Match<DNA4> for DNA4 {
     }
 }
 
-impl TryFrom<&DNA> for DNA4 {
-    type Error = SeqError;
-    fn try_from(base: &DNA) -> Result<Self, Self::Error> {
-        let a = *base as u8;
-        // If DNA has more than 1 bit set it's redundant, so not representable.
-        if a.count_ones() > 1 {
-            Err(SeqErrorKind::RedundantAlphabetConversionError {
-                base: char::from(base),
+try_from_borrowed! {
+    impl TryFrom<&DNA> for DNA4 {
+        type Error = SeqError;
+        fn try_from(base: &DNA) -> Result<Self, Self::Error> {
+            let a = *base as u8;
+            // If DNA has more than 1 bit set it's redundant, so not representable.
+            if a.count_ones() > 1 {
+                Err(SeqErrorKind::RedundantAlphabetConversionError {
+                    base: char::from(base),
+                }
+                .into())
+            } else {
+                // This is effectively the log2.
+                // DNA and DNA4 are arranged so that they have this exponent relationship.
+                let b = a.trailing_zeros() as u8;
+                unsafe { Ok(std::mem::transmute::<u8, DNA4>(b)) }
             }
-            .into())
-        } else {
-            // This is effectively the log2.
-            // DNA and DNA4 are arranged so that they have this exponent relationship.
-            let b = a.trailing_zeros() as u8;
-            unsafe { Ok(std::mem::transmute::<u8, DNA4>(b)) }
         }
     }
 }
 
-impl TryFrom<DNA> for DNA4 {
-    type Error = SeqError;
-    fn try_from(base: DNA) -> Result<Self, Self::Error> {
-        Self::try_from(&base)
-    }
-}
 
 #[cfg(test)]
 mod tests {

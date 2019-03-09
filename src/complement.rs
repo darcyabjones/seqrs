@@ -9,23 +9,15 @@
 //! #[derive(Debug, Copy, Clone, PartialEq)]
 //! pub enum DNA {A, T, G, C};
 //!
-//! impl Complement for &DNA {
+//! impl Complement for DNA {
 //!     type Compl = DNA;
-//!     fn complement(self) -> Self::Compl {
+//!     fn complement(&self) -> Self::Compl {
 //!         match self {
 //!             DNA::A => DNA::T,
 //!             DNA::T => DNA::A,
 //!             DNA::G => DNA::C,
 //!             DNA::C => DNA::G,
 //!         }
-//!     }
-//! }
-//!
-//! impl Complement for DNA {
-//!     type Compl = DNA;
-//!
-//!     fn complement(self) -> Self::Compl {
-//!         (&self).complement()
 //!     }
 //! }
 //!
@@ -63,8 +55,22 @@ pub trait Complement {
     type Compl;
 
     /// A method that returns the nucleotide complement of `self`.
-    fn complement(self) -> Self::Compl;
+    fn complement(&self) -> Self::Compl;
 }
+
+
+// Generic implementation of complement for borrowed values.
+impl<T> Complement for &T
+where
+    T: Complement<Compl=T>
+{
+    type Compl = <T as Complement>::Compl;
+
+    fn complement(&self) -> Self::Compl {
+        <T as Complement>::complement(self)
+    }
+}
+
 
 /// A trait with methods to enter the reverse complement iterator adapter.
 ///

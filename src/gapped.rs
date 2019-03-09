@@ -7,6 +7,8 @@
 use std::convert::TryFrom;
 use std::fmt;
 
+use crate::complement::Complement;
+
 /// A gapped alphabet essentially adds a new [`Gap`] variant to the wrapped type.
 /// [`Base`] is used to contain the wrapped alphabet variants (apologies to
 /// Amino Acid fans out there :) ). [`Gap`] represents a gap in the sequence.
@@ -620,13 +622,24 @@ impl<T: Into<char> + Copy> From<&Gapped<T>> for char {
     }
 }
 
-impl<T: Into<char> + Copy> From<Gapped<T>> for char {
+impl<T: Into<char>> From<Gapped<T>> for char {
     /// Convert gapped alphabet to char representation.
     fn from(base: Gapped<T>) -> Self {
         match base {
             Gapped::Base(x) => x.into(),
             Gapped::Gap => '-',
         }
+    }
+}
+
+impl<T> Complement for Gapped<T>
+where
+    T: Complement,
+{
+    type Compl = Gapped<<T as Complement>::Compl>;
+
+    fn complement(&self) -> Self::Compl {
+        self.as_ref().map(|a| a.complement())
     }
 }
 

@@ -2,6 +2,88 @@
 ///
 ///
 
+
+/// A helper macro to implement `TryFrom` for owned and borrowed variants.
+#[macro_export]
+macro_rules! try_from_borrowed {
+    (
+        impl TryFrom<&$from:ident> for $type:ident {
+            type Error = $error:ident;
+
+            $($def:tt)*
+        }
+    ) => {
+        impl std::convert::TryFrom<&$from> for $type {
+            type Error = $error;
+            $($def)*
+        }
+
+        impl std::convert::TryFrom<$from> for $type {
+            type Error = $error;
+
+            fn try_from(t: $from) -> Result<Self, Self::Error> {
+                Self::try_from(&t)
+            }
+        }
+    };
+    (
+        impl TryFrom<$from:ident> for $type:ident {
+            type Error = $error:ident;
+
+            $($def:tt)*
+        }
+    ) => {
+        impl std::convert::TryFrom<$from> for $type {
+            type Error = $error;
+            $($def)*
+        }
+
+        impl std::convert::TryFrom<&$from> for $type {
+            type Error = $error;
+
+            fn try_from(t: &$from) -> Result<Self, Self::Error> {
+                Self::try_from(t.to_owned())
+            }
+        }
+    }
+}
+
+
+/// A helper macro to implement `From` for owned and borrowed variants.
+#[macro_export]
+macro_rules! from_borrowed {
+    (
+        impl From<&$from:ident> for $type:ident {
+            $($def:tt)*
+        }
+    ) => {
+        impl From<&$from> for $type {
+            $($def)*
+        }
+
+        impl From<$from> for $type {
+            fn from(t: $from) -> Self {
+                Self::from(&t)
+            }
+        }
+    };
+    (
+        impl From<$from:ident> for $type:ident {
+            $($def:tt)*
+        }
+    ) => {
+        impl From<$from> for $type {
+            $($def)*
+        }
+
+        impl From<&$from> for $type {
+            fn from(t: &$from) -> Self {
+                Self::from(t.to_owned())
+            }
+        }
+    }
+}
+
 /// Creates a single letter biological alphabet.
 ///
 #[macro_export]

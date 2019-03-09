@@ -153,110 +153,92 @@ impl Default for AA {
     }
 }
 
-impl TryFrom<&u8> for AA {
-    type Error = SeqError;
-    fn try_from(base: &u8) -> Result<Self, Self::Error> {
-        match base.to_ascii_uppercase() {
-            b'A' => Ok(AA::A),
-            b'B' => Ok(AA::B),
-            b'C' => Ok(AA::C),
-            b'D' => Ok(AA::D),
-            b'E' => Ok(AA::E),
-            b'F' => Ok(AA::F),
-            b'G' => Ok(AA::G),
-            b'H' => Ok(AA::H),
-            b'I' => Ok(AA::I),
-            b'J' => Ok(AA::J),
-            b'K' => Ok(AA::K),
-            b'L' => Ok(AA::L),
-            b'M' => Ok(AA::M),
-            b'N' => Ok(AA::N),
-            b'O' => Ok(AA::O),
-            b'P' => Ok(AA::P),
-            b'Q' => Ok(AA::Q),
-            b'R' => Ok(AA::R),
-            b'S' => Ok(AA::S),
-            b'T' => Ok(AA::T),
-            b'U' => Ok(AA::U),
-            b'V' => Ok(AA::V),
-            b'W' => Ok(AA::W),
-            b'X' => Ok(AA::X),
-            b'Y' => Ok(AA::Y),
-            b'Z' => Ok(AA::Z),
-            b => Err(SeqErrorKind::AlphabetReadError { base: b as char }.into()),
+try_from_borrowed! {
+    impl TryFrom<&u8> for AA {
+        type Error = SeqError;
+        fn try_from(base: &u8) -> Result<Self, Self::Error> {
+            match base.to_ascii_uppercase() {
+                b'A' => Ok(AA::A),
+                b'B' => Ok(AA::B),
+                b'C' => Ok(AA::C),
+                b'D' => Ok(AA::D),
+                b'E' => Ok(AA::E),
+                b'F' => Ok(AA::F),
+                b'G' => Ok(AA::G),
+                b'H' => Ok(AA::H),
+                b'I' => Ok(AA::I),
+                b'J' => Ok(AA::J),
+                b'K' => Ok(AA::K),
+                b'L' => Ok(AA::L),
+                b'M' => Ok(AA::M),
+                b'N' => Ok(AA::N),
+                b'O' => Ok(AA::O),
+                b'P' => Ok(AA::P),
+                b'Q' => Ok(AA::Q),
+                b'R' => Ok(AA::R),
+                b'S' => Ok(AA::S),
+                b'T' => Ok(AA::T),
+                b'U' => Ok(AA::U),
+                b'V' => Ok(AA::V),
+                b'W' => Ok(AA::W),
+                b'X' => Ok(AA::X),
+                b'Y' => Ok(AA::Y),
+                b'Z' => Ok(AA::Z),
+                b => Err(SeqErrorKind::AlphabetReadError { base: b as char }.into()),
+            }
         }
     }
 }
 
-impl TryFrom<u8> for AA {
-    type Error = SeqError;
-    fn try_from(base: u8) -> Result<Self, Self::Error> {
-        Self::try_from(&(base))
-    }
-}
-
-impl TryFrom<&char> for AA {
-    type Error = SeqError;
-    fn try_from(base: &char) -> Result<Self, Self::Error> {
-        crate::utils::char_to_byte(base).and_then(|b| Self::try_from(&b))
-    }
-}
-
-impl TryFrom<char> for AA {
-    type Error = SeqError;
-    fn try_from(base: char) -> Result<Self, Self::Error> {
-        crate::utils::char_to_byte(&base).and_then(|b| Self::try_from(&b))
-    }
-}
-
-impl From<&AA> for u8 {
-    fn from(base: &AA) -> Self {
-        match base {
-            AA::A => b'A',
-            AA::B => b'B',
-            AA::C => b'C',
-            AA::D => b'D',
-            AA::E => b'E',
-            AA::F => b'F',
-            AA::G => b'G',
-            AA::H => b'H',
-            AA::I => b'I',
-            AA::J => b'J',
-            AA::K => b'K',
-            AA::L => b'L',
-            AA::M => b'M',
-            AA::N => b'N',
-            AA::O => b'O',
-            AA::P => b'P',
-            AA::Q => b'Q',
-            AA::R => b'R',
-            AA::S => b'S',
-            AA::T => b'T',
-            AA::U => b'U',
-            AA::V => b'V',
-            AA::W => b'W',
-            AA::X => b'X',
-            AA::Y => b'Y',
-            AA::Z => b'Z',
+try_from_borrowed! {
+    impl TryFrom<&char> for AA {
+        type Error = SeqError;
+        fn try_from(base: &char) -> Result<Self, Self::Error> {
+            crate::utils::char_to_byte(base).and_then(|b| Self::try_from(&b))
         }
     }
 }
 
-impl From<AA> for u8 {
-    fn from(base: AA) -> Self {
-        (&base).into()
+from_borrowed! {
+    impl From<&AA> for u8 {
+        fn from(base: &AA) -> Self {
+            match base {
+                AA::A => b'A',
+                AA::B => b'B',
+                AA::C => b'C',
+                AA::D => b'D',
+                AA::E => b'E',
+                AA::F => b'F',
+                AA::G => b'G',
+                AA::H => b'H',
+                AA::I => b'I',
+                AA::J => b'J',
+                AA::K => b'K',
+                AA::L => b'L',
+                AA::M => b'M',
+                AA::N => b'N',
+                AA::O => b'O',
+                AA::P => b'P',
+                AA::Q => b'Q',
+                AA::R => b'R',
+                AA::S => b'S',
+                AA::T => b'T',
+                AA::U => b'U',
+                AA::V => b'V',
+                AA::W => b'W',
+                AA::X => b'X',
+                AA::Y => b'Y',
+                AA::Z => b'Z',
+            }
+        }
     }
 }
 
-impl From<&AA> for char {
-    fn from(base: &AA) -> Self {
-        u8::from(base) as char
-    }
-}
-
-impl From<AA> for char {
-    fn from(base: AA) -> Self {
-        u8::from(&base) as char
+from_borrowed! {
+    impl From<&AA> for char {
+        fn from(base: &AA) -> Self {
+            u8::from(base) as char
+        }
     }
 }
 

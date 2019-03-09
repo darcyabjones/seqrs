@@ -112,88 +112,70 @@ impl Default for DNA {
     }
 }
 
-impl TryFrom<&u8> for DNA {
-    type Error = SeqError;
-    fn try_from(base: &u8) -> Result<Self, Self::Error> {
-        match base.to_ascii_uppercase() {
-            b'A' => Ok(DNA::A),
-            b'C' => Ok(DNA::C),
-            b'M' => Ok(DNA::M),
-            b'G' => Ok(DNA::G),
-            b'R' => Ok(DNA::R),
-            b'S' => Ok(DNA::S),
-            b'V' => Ok(DNA::V),
-            b'T' => Ok(DNA::T),
-            b'W' => Ok(DNA::W),
-            b'Y' => Ok(DNA::Y),
-            b'H' => Ok(DNA::H),
-            b'K' => Ok(DNA::K),
-            b'D' => Ok(DNA::D),
-            b'B' => Ok(DNA::B),
-            b'N' => Ok(DNA::N),
-            b => Err(SeqErrorKind::AlphabetReadError { base: b as char }.into()),
+try_from_borrowed! {
+    impl TryFrom<&u8> for DNA {
+        type Error = SeqError;
+        fn try_from(base: &u8) -> Result<Self, Self::Error> {
+            match base.to_ascii_uppercase() {
+                b'A' => Ok(DNA::A),
+                b'C' => Ok(DNA::C),
+                b'M' => Ok(DNA::M),
+                b'G' => Ok(DNA::G),
+                b'R' => Ok(DNA::R),
+                b'S' => Ok(DNA::S),
+                b'V' => Ok(DNA::V),
+                b'T' => Ok(DNA::T),
+                b'W' => Ok(DNA::W),
+                b'Y' => Ok(DNA::Y),
+                b'H' => Ok(DNA::H),
+                b'K' => Ok(DNA::K),
+                b'D' => Ok(DNA::D),
+                b'B' => Ok(DNA::B),
+                b'N' => Ok(DNA::N),
+                b => Err(SeqErrorKind::AlphabetReadError { base: b as char }.into()),
+            }
         }
     }
 }
 
-impl TryFrom<u8> for DNA {
-    type Error = SeqError;
-    fn try_from(base: u8) -> Result<Self, Self::Error> {
-        Self::try_from(&(base))
-    }
-}
-
-impl TryFrom<&char> for DNA {
-    type Error = SeqError;
-    fn try_from(base: &char) -> Result<Self, Self::Error> {
-        crate::utils::char_to_byte(base).and_then(|b| Self::try_from(&b))
-    }
-}
-
-impl TryFrom<char> for DNA {
-    type Error = SeqError;
-    fn try_from(base: char) -> Result<Self, Self::Error> {
-        crate::utils::char_to_byte(&base).and_then(|b| Self::try_from(&b))
-    }
-}
-
-impl From<&DNA> for u8 {
-    fn from(base: &DNA) -> Self {
-        match base {
-            DNA::A => b'A',
-            DNA::C => b'C',
-            DNA::M => b'M',
-            DNA::G => b'G',
-            DNA::R => b'R',
-            DNA::S => b'S',
-            DNA::V => b'V',
-            DNA::T => b'T',
-            DNA::W => b'W',
-            DNA::Y => b'Y',
-            DNA::H => b'H',
-            DNA::K => b'K',
-            DNA::D => b'D',
-            DNA::B => b'B',
-            DNA::N => b'N',
+try_from_borrowed! {
+    impl TryFrom<&char> for DNA {
+        type Error = SeqError;
+        fn try_from(base: &char) -> Result<Self, Self::Error> {
+            crate::utils::char_to_byte(base).and_then(|b| Self::try_from(&b))
         }
     }
 }
 
-impl From<DNA> for u8 {
-    fn from(base: DNA) -> Self {
-        (&base).into()
+from_borrowed! {
+    impl From<&DNA> for u8 {
+        fn from(base: &DNA) -> Self {
+            match base {
+                DNA::A => b'A',
+                DNA::C => b'C',
+                DNA::M => b'M',
+                DNA::G => b'G',
+                DNA::R => b'R',
+                DNA::S => b'S',
+                DNA::V => b'V',
+                DNA::T => b'T',
+                DNA::W => b'W',
+                DNA::Y => b'Y',
+                DNA::H => b'H',
+                DNA::K => b'K',
+                DNA::D => b'D',
+                DNA::B => b'B',
+                DNA::N => b'N',
+            }
+        }
     }
 }
 
-impl From<&DNA> for char {
-    fn from(base: &DNA) -> Self {
-        u8::from(base) as char
-    }
-}
-
-impl From<DNA> for char {
-    fn from(base: DNA) -> Self {
-        u8::from(&base) as char
+from_borrowed! {
+    impl From<&DNA> for char {
+        fn from(base: &DNA) -> Self {
+            u8::from(base) as char
+        }
     }
 }
 
@@ -203,41 +185,13 @@ impl std::fmt::Display for DNA {
     }
 }
 
-impl Complement for &DNA {
+impl Complement for DNA {
     type Compl = DNA;
-    fn complement(self) -> Self::Compl {
+    fn complement(&self) -> Self::Compl {
         let a = *self as u8;
         let comp = (a & 0b0001) << 3 | (a & 0b0010) << 1 | (a & 0b0100) >> 1 | (a & 0b1000) >> 3;
 
         unsafe { std::mem::transmute::<u8, Self::Compl>(comp) }
-    }
-}
-
-impl Complement for DNA {
-    type Compl = DNA;
-    fn complement(self) -> Self::Compl {
-        (&self).complement()
-    }
-}
-
-impl Complement for &Gapped<DNA> {
-    type Compl = Gapped<DNA>;
-    fn complement(self) -> Self::Compl {
-        self.map(|a| a.complement())
-    }
-}
-
-impl Complement for Gapped<DNA> {
-    type Compl = Gapped<DNA>;
-    fn complement(self) -> Self::Compl {
-        (&self).complement()
-    }
-}
-
-impl Complement for Gapped<&DNA> {
-    type Compl = Gapped<DNA>;
-    fn complement(self) -> Self::Compl {
-        self.map(|a| a.complement())
     }
 }
 
@@ -286,18 +240,14 @@ impl RedundantAlphabet for DNA {
     }
 }
 
-impl From<&DNA4> for DNA {
-    fn from(base: &DNA4) -> Self {
-        let a = *base as u8;
-        let b: u8 = 0b0001 << a;
+from_borrowed! {
+    impl From<&DNA4> for DNA {
+        fn from(base: &DNA4) -> Self {
+            let a = *base as u8;
+            let b: u8 = 0b0001 << a;
 
-        unsafe { std::mem::transmute::<u8, DNA>(b) }
-    }
-}
-
-impl From<DNA4> for DNA {
-    fn from(base: DNA4) -> Self {
-        (&base).into()
+            unsafe { std::mem::transmute::<u8, DNA>(b) }
+        }
     }
 }
 
