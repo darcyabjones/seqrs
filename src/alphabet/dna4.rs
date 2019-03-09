@@ -40,7 +40,6 @@ impl DNA4 {
     }
 }
 
-
 try_from_borrowed! {
     impl TryFrom<&u8> for DNA4 {
         type Error = SeqError;
@@ -56,7 +55,6 @@ try_from_borrowed! {
     }
 }
 
-
 try_from_borrowed! {
     impl TryFrom<&char> for DNA4 {
         type Error = SeqError;
@@ -65,7 +63,6 @@ try_from_borrowed! {
         }
     }
 }
-
 
 from_borrowed! {
     impl From<&DNA4> for u8 {
@@ -80,7 +77,6 @@ from_borrowed! {
     }
 }
 
-
 from_borrowed! {
     impl From<&DNA4> for char {
         fn from(base: &DNA4) -> Self {
@@ -88,7 +84,6 @@ from_borrowed! {
         }
     }
 }
-
 
 impl std::fmt::Display for DNA4 {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -132,7 +127,6 @@ try_from_borrowed! {
         }
     }
 }
-
 
 #[cfg(test)]
 mod tests {

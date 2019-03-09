@@ -58,11 +58,10 @@ pub trait Complement {
     fn complement(&self) -> Self::Compl;
 }
 
-
 // Generic implementation of complement for borrowed values.
 impl<T> Complement for &T
 where
-    T: Complement<Compl=T>
+    T: Complement<Compl = T>,
 {
     type Compl = <T as Complement>::Compl;
 
@@ -70,7 +69,6 @@ where
         <T as Complement>::complement(self)
     }
 }
-
 
 /// A trait with methods to enter the reverse complement iterator adapter.
 ///

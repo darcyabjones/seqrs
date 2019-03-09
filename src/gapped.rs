@@ -8,8 +8,8 @@ use std::convert::TryFrom;
 use std::fmt;
 
 use crate::complement::Complement;
-use crate::translate::TranslationTable;
 use crate::translate::CodonTagTable;
+use crate::translate::TranslationTable;
 
 /// A gapped alphabet essentially adds a new [`Gap`] variant to the wrapped type.
 /// [`Base`] is used to contain the wrapped alphabet variants (apologies to
@@ -647,19 +647,21 @@ where
 
 impl<K, V, T> TranslationTable<Gapped<K>, Gapped<V>> for T
 where
-    T: TranslationTable<K, V>
+    T: TranslationTable<K, V>,
 {
     fn get(&self, k: &Gapped<K>) -> Gapped<V> {
-        k.as_ref().map(|a| <T as TranslationTable<K, V>>::get(self, a))
+        k.as_ref()
+            .map(|a| <T as TranslationTable<K, V>>::get(self, a))
     }
 }
 
 impl<K, V, T> CodonTagTable<Gapped<K>, Gapped<V>> for T
 where
-    T: CodonTagTable<K, V>
+    T: CodonTagTable<K, V>,
 {
     fn get_tag(&self, k: &Gapped<K>) -> Gapped<V> {
-        k.as_ref().map(|a| <T as CodonTagTable<K, V>>::get_tag(self, a))
+        k.as_ref()
+            .map(|a| <T as CodonTagTable<K, V>>::get_tag(self, a))
     }
 }
 

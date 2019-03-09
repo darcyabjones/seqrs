@@ -64,7 +64,9 @@ where
 {
     #[inline]
     fn next_back(&mut self) -> Option<O> {
-        self.iter.next_back().map(|codon| self.table.get_tag(&codon))
+        self.iter
+            .next_back()
+            .map(|codon| self.table.get_tag(&codon))
     }
 }
 

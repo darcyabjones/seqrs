@@ -2,7 +2,6 @@
 ///
 ///
 
-
 /// A helper macro to implement `TryFrom` for owned and borrowed variants.
 #[macro_export]
 macro_rules! try_from_borrowed {
@@ -47,7 +46,6 @@ macro_rules! try_from_borrowed {
         }
     }
 }
-
 
 /// A helper macro to implement `From` for owned and borrowed variants.
 #[macro_export]
