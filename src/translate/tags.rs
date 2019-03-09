@@ -1,7 +1,17 @@
 use std::marker::PhantomData;
 
 pub trait CodonTagTable<K, V> {
-    fn get_tag(&self, k: K) -> V;
+    fn get_tag(&self, k: &K) -> V;
+}
+
+// Generic implementation for borrowed keys.
+impl<K, V, T> CodonTagTable<&K, V> for T
+where
+    T: CodonTagTable<K, V>,
+{
+    fn get_tag(&self, k: &&K) -> V {
+        <T as CodonTagTable<K, V>>::get_tag(self, k)
+    }
 }
 
 pub trait IntoCodonTags<O, T>: Sized {
@@ -38,7 +48,7 @@ where
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
-        self.iter.next().map(|codon| self.table.get_tag(codon))
+        self.iter.next().map(|codon| self.table.get_tag(&codon))
     }
 
     #[inline]
@@ -54,7 +64,7 @@ where
 {
     #[inline]
     fn next_back(&mut self) -> Option<O> {
-        self.iter.next_back().map(|codon| self.table.get_tag(codon))
+        self.iter.next_back().map(|codon| self.table.get_tag(&codon))
     }
 }
 
@@ -93,7 +103,7 @@ mod tests {
         );
 
         assert_eq!(
-            NCBITransTable::Standard.get_tag(Codon(A, T, G)),
+            NCBITransTable::Standard.get_tag(&&Codon(A, T, G)),
             CodonTag::Start
         );
 
@@ -103,7 +113,7 @@ mod tests {
         );
 
         assert_eq!(
-            NCBITransTable::Standard.get_tag(Base(Codon(A, T, G))),
+            NCBITransTable::Standard.get_tag(&&Base(Codon(A, T, G))),
             Base(CodonTag::Start)
         );
     }

@@ -23,9 +23,9 @@ mod trans {
     use crate::translate::NCBITransTable::*;
     use crate::translate::TranslationTable;
 
-    impl TranslationTable<&Codon<DNA>, Stopped<AA>> for NCBITransTable {
+    impl TranslationTable<Codon<DNA>, Stopped<AA>> for NCBITransTable {
         fn get(&self, k: &Codon<DNA>) -> Stopped<AA> {
-            let index = codon_index(k);
+            let index = codon_index(&k);
             match self {
                 Standard => CODONS_STANDARD[index],
                 VertebrateMito => CODONS_VERTEBRATE_MITO[index],
@@ -55,24 +55,6 @@ mod trans {
                 BalanophoraceaePlastid => CODONS_BALANOPHORACEAE_PLASTID[index],
                 CephalodiscidaeMito => CODONS_CEPHALODISCIDAE_MITO[index],
             }
-        }
-    }
-
-    impl TranslationTable<Codon<DNA>, Stopped<AA>> for NCBITransTable {
-        fn get(&self, k: Codon<DNA>) -> Stopped<AA> {
-            <Self as TranslationTable<&Codon<DNA>, Stopped<AA>>>::get(self, &k)
-        }
-    }
-
-    impl TranslationTable<&Gapped<Codon<DNA>>, Gapped<Stopped<AA>>> for NCBITransTable {
-        fn get(&self, k: &Gapped<Codon<DNA>>) -> Gapped<Stopped<AA>> {
-            k.map(|c| self.get(c))
-        }
-    }
-
-    impl TranslationTable<Gapped<Codon<DNA>>, Gapped<Stopped<AA>>> for NCBITransTable {
-        fn get(&self, k: Gapped<Codon<DNA>>) -> Gapped<Stopped<AA>> {
-            k.map(|c| self.get(&c))
         }
     }
 
@@ -91269,9 +91251,9 @@ mod tags {
     use crate::translate::NCBITransTable;
     use crate::translate::NCBITransTable::*;
 
-    impl CodonTagTable<&Codon<DNA>, CodonTag> for NCBITransTable {
+    impl CodonTagTable<Codon<DNA>, CodonTag> for NCBITransTable {
         fn get_tag(&self, k: &Codon<DNA>) -> CodonTag {
-            let index = codon_index(k);
+            let index = codon_index(&k);
             match self {
                 Standard => TAGS_STANDARD[index],
                 VertebrateMito => TAGS_VERTEBRATE_MITO[index],
@@ -91301,24 +91283,6 @@ mod tags {
                 BalanophoraceaePlastid => TAGS_BALANOPHORACEAE_PLASTID[index],
                 CephalodiscidaeMito => TAGS_CEPHALODISCIDAE_MITO[index],
             }
-        }
-    }
-
-    impl CodonTagTable<Codon<DNA>, CodonTag> for NCBITransTable {
-        fn get_tag(&self, k: Codon<DNA>) -> CodonTag {
-            self.get_tag(&k)
-        }
-    }
-
-    impl CodonTagTable<&Gapped<Codon<DNA>>, Gapped<CodonTag>> for NCBITransTable {
-        fn get_tag(&self, k: &Gapped<Codon<DNA>>) -> Gapped<CodonTag> {
-            k.map(|c| self.get_tag(c))
-        }
-    }
-
-    impl CodonTagTable<Gapped<Codon<DNA>>, Gapped<CodonTag>> for NCBITransTable {
-        fn get_tag(&self, k: Gapped<Codon<DNA>>) -> Gapped<CodonTag> {
-            k.map(|c| self.get_tag(&c))
         }
     }
 

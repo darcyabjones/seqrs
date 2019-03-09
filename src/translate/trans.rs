@@ -5,7 +5,17 @@ use std::marker::PhantomData;
 /// TranslationTable is implemented for 'tag' structs or enums to allow different table types
 /// behaviour.
 pub trait TranslationTable<K, V> {
-    fn get(&self, k: K) -> V;
+    fn get(&self, k: &K) -> V;
+}
+
+// Generic implementation for borrowed keys.
+impl<K, V, T> TranslationTable<&K, V> for T
+where
+    T: TranslationTable<K, V>,
+{
+    fn get(&self, k: &&K) -> V {
+        <T as TranslationTable<K, V>>::get(self, k)
+    }
 }
 
 pub trait IntoTranslate<O, T>: Sized {
@@ -42,7 +52,7 @@ where
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
-        self.iter.next().map(|codon| self.table.get(codon))
+        self.iter.next().map(|codon| self.table.get(&codon))
     }
 
     #[inline]
@@ -58,7 +68,7 @@ where
 {
     #[inline]
     fn next_back(&mut self) -> Option<O> {
-        self.iter.next_back().map(|codon| self.table.get(codon))
+        self.iter.next_back().map(|codon| self.table.get(&codon))
     }
 }
 
@@ -96,7 +106,7 @@ mod tests {
     fn test_trans_table_ownership() {
         assert_eq!(NCBITransTable::Standard.get(&Codon(A, T, G)), Res(AA::M));
 
-        assert_eq!(NCBITransTable::Standard.get(Codon(A, T, G)), Res(AA::M));
+        assert_eq!(NCBITransTable::Standard.get(&&Codon(A, T, G)), Res(AA::M));
 
         assert_eq!(
             NCBITransTable::Standard.get(&Base(Codon(A, T, G))),
@@ -104,7 +114,7 @@ mod tests {
         );
 
         assert_eq!(
-            NCBITransTable::Standard.get(Base(Codon(A, T, G))),
+            NCBITransTable::Standard.get(&&Base(Codon(A, T, G))),
             Base(Res(AA::M))
         );
     }

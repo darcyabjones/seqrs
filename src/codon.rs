@@ -73,7 +73,7 @@ impl<T> Codon<T> {
     where
         U: TranslationTable<&'a Codon<T>, V>,
     {
-        table.get(self)
+        table.get(&self)
     }
 
     /// Gets the translation codon tag using the mapping defined in some type
@@ -113,7 +113,7 @@ impl<T> Codon<T> {
     where
         U: CodonTagTable<&'a Codon<T>, V>,
     {
-        table.get_tag(self)
+        table.get_tag(&self)
     }
 
     /// Converts from [`Codon<T>`] to [`Codon<&T>`].
