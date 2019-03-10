@@ -1,10 +1,11 @@
-use crate::errors::{SeqError, SeqErrorKind};
-use crate::translate::CodonTagTable;
 /// A generalised codon alphabet.
-use crate::translate::TranslationTable;
-
 use std::convert::{TryFrom, TryInto};
 use std::str::FromStr;
+
+use crate::alphabet::Alphabet;
+use crate::errors::{SeqError, SeqErrorKind};
+use crate::translate::CodonTagTable;
+use crate::translate::TranslationTable;
 
 /// Codons represented as tuple struct.
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -238,19 +239,38 @@ impl<T> Codon<T> {
     }
 }
 
+impl<T: Alphabet + Clone> Codon<T> {
+
+    /// The number of possible codons given the alphabet.
+    pub fn cardinality() -> usize {
+        let size = T::cardinality() as u32;
+        3_u32.pow(size) as usize
+    }
+
+    /// The unique numeric rank for this 3-mer.
+    pub fn rank(&self) -> usize {
+        let size = T::cardinality() as usize;
+        let b1 = (self.first().rank() as usize) * size.pow(2);
+        let b2 = (self.second().rank() as usize) * size;
+        let b3 = self.third().rank() as usize;
+        return b1 + b2 + b3
+    }
+
+    pub fn variants() -> Vec<Self> {
+        let mut output = Vec::with_capacity(Self::cardinality());
+        for b1 in T::variants() {
+            for b2 in T::variants() {
+                for b3 in T::variants() {
+                    output.push(Codon(b1.clone(), b2.clone(), b3.clone()))
+                }
+            }
+        }
+
+        output
+    }
+}
+
 impl<T: Default> Default for Codon<T> {
-    /// Returns codon with contained types defaults.
-    ///
-    /// Examples:
-    ///
-    /// ```
-    /// use seqrs::codon::Codon;
-    /// use seqrs::alphabet::DNA;
-    ///
-    /// let c = Codon::<DNA>::default();
-    /// assert_eq!(c, Codon(DNA::default(), DNA::default(), DNA::default()));
-    /// ```
-    #[inline]
     fn default() -> Self {
         Self(T::default(), T::default(), T::default())
     }

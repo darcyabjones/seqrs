@@ -1,12 +1,11 @@
 //! A standard non-redundant DNA alphabet.
+use std::convert::TryFrom;
 
 use crate::alphabet::DNA;
 use crate::complement::Complement;
 use crate::errors::{SeqError, SeqErrorKind};
-use crate::gapped::Gapped;
-use crate::matcher::{Match, RedundantAlphabet};
-
-use std::convert::TryFrom;
+use crate::matcher::Match;
+use crate::alphabet::Alphabet;
 
 /// A Non-redundant four letter DNA alphabet.
 #[repr(u8)]
@@ -18,27 +17,28 @@ pub enum DNA4 {
     T = 0b11,
 }
 
-impl DNA4 {
-    /// The names of the DNA bases.
-    pub fn name(&self) -> String {
-        match &self {
-            DNA4::A => String::from("Alanine"),
-            DNA4::C => String::from("Cytosine"),
-            DNA4::G => String::from("Guanine"),
-            DNA4::T => String::from("Thymine"),
-        }
+
+impl Alphabet for DNA4 {
+    /// The number of letters in this alphabet.
+    fn cardinality() -> u8 {
+        4
+    }
+
+    fn rank(&self) -> u8 {
+        *self as u8
+    }
+
+    unsafe fn from_rank_unsafe(r: u8) -> Self {
+        debug_assert!(r < Self::cardinality());
+        std::mem::transmute::<u8, Self>(r)
     }
 
     /// Returns a Vec of all of the Enum variants.
-    pub fn variants() -> Vec<Self> {
+    fn variants() -> Vec<Self> {
         vec![DNA4::A, DNA4::C, DNA4::G, DNA4::T]
     }
-
-    /// The number of letters in this alphabet.
-    pub fn cardinality() -> usize {
-        4
-    }
 }
+
 
 try_from_borrowed! {
     impl TryFrom<&u8> for DNA4 {

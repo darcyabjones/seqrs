@@ -1,22 +1,8 @@
-use crate::alphabet::DNA;
-use crate::codon::Codon;
-
-/// Simple perfect hash function for 3-mers.
-fn codon_index(c: &Codon<DNA>) -> usize {
-    let Codon(b1, b2, b3) = c;
-    let b1 = ((*b1 as usize) - 1) * 225;
-    let b2 = ((*b2 as usize) - 1) * 15;
-    let b3 = (*b3 as usize) - 1;
-    b1 + b2 + b3
-}
-
 mod trans {
-    use super::codon_index;
     use crate::alphabet::AA;
     use crate::alphabet::AA::*;
     use crate::alphabet::DNA;
     use crate::codon::Codon;
-    use crate::gapped::Gapped;
     use crate::stopped::Stopped;
     use crate::stopped::Stopped::{Res, Stop, StopOr};
     use crate::translate::NCBITransTable;
@@ -25,7 +11,7 @@ mod trans {
 
     impl TranslationTable<Codon<DNA>, Stopped<AA>> for NCBITransTable {
         fn get(&self, k: &Codon<DNA>) -> Stopped<AA> {
-            let index = codon_index(&k);
+            let index = k.rank();
             match self {
                 Standard => CODONS_STANDARD[index],
                 VertebrateMito => CODONS_VERTEBRATE_MITO[index],
@@ -91241,19 +91227,17 @@ mod trans {
 }
 
 mod tags {
-    use super::codon_index;
     use crate::alphabet::CodonTag;
     use crate::alphabet::CodonTag::*;
     use crate::alphabet::DNA;
     use crate::codon::Codon;
-    use crate::gapped::Gapped;
     use crate::translate::CodonTagTable;
     use crate::translate::NCBITransTable;
     use crate::translate::NCBITransTable::*;
 
     impl CodonTagTable<Codon<DNA>, CodonTag> for NCBITransTable {
         fn get_tag(&self, k: &Codon<DNA>) -> CodonTag {
-            let index = codon_index(&k);
+            let index = k.rank();
             match self {
                 Standard => TAGS_STANDARD[index],
                 VertebrateMito => TAGS_VERTEBRATE_MITO[index],
@@ -98139,6 +98123,7 @@ mod tests {
     use crate::translate::CodonTagTable;
     use crate::translate::NCBITransTable;
     use crate::translate::TranslationTable;
+    use crate::alphabet::Alphabet;
 
     //use test::{Bencher, black_box};
     use proptest::sample::select;

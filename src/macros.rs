@@ -397,6 +397,39 @@ macro_rules! alphabet {
     };
 }
 
+/// A macro to more easily implement table traits with array constants.
+#[macro_export]
+macro_rules! impl_tables {
+    (
+        impl TranslationTable<$key:ty, $val:ty> for {
+            $($table:ty => $array:ident;)+
+        }
+    ) => {
+        $(
+            impl $crate::translate::TranslationTable<$key, $val> for $table {
+                fn get(&self, k: &$key) -> $val {
+                    $array[k.rank()]
+                }
+            }
+        )+
+    };
+    (
+        impl CodonTagTable<$key:ty, $val:ty> for {
+            $($table:ty => $array:ident;)+
+        }
+    ) => {
+        $(
+            impl $crate::translate::CodonTagTable<$key, $val> for $table {
+                fn get_tag(&self, k: &$key) -> $val {
+                    $array[k.rank()]
+                }
+            }
+        )+
+    }
+}
+
+
+
 /*
 #[cfg(test)]
 mod tests {

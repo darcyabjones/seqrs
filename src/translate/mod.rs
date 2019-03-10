@@ -8,9 +8,8 @@ mod dna_aa;
 mod tags;
 mod trans;
 
-pub use crate::translate::trans::{IntoTranslate, Translate, TranslationTable};
-
 pub use crate::translate::tags::{CodonTagTable, CodonTags};
+pub use crate::translate::trans::{IntoTranslate, Translate, TranslationTable};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum NCBITransTable {
@@ -115,3 +114,4 @@ impl NCBITransTable {
         }
     }
 }
+

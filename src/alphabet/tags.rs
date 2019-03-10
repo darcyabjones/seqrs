@@ -1,6 +1,8 @@
 use crate::matcher::{Match, RedundantAlphabet};
+use crate::alphabet::Alphabet;
 
-#[derive(Debug, Clone, PartialEq, Eq, Copy)]
+#[repr(u8)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum CodonTag {
     Start,
     Res,
@@ -12,26 +14,38 @@ pub enum CodonTag {
 }
 
 impl CodonTag {
-    fn cardinality() -> usize {
+    fn redundant_matches(&self) -> Vec<Self> {
+        use super::CodonTag::*;
+        match self {
+            StartRes => vec![Start, Res],
+            StartStop => vec![Start, Stop],
+            StopRes => vec![Res, Stop],
+            Any => vec![Start, Res, Stop],
+            _ => Vec::new(), // NB won't allocate until element pushed onto it.
+        }
+    }
+}
+
+impl Alphabet for CodonTag {
+    fn cardinality() -> u8 {
         7
+    }
+
+    fn rank(&self) -> u8 {
+        *self as u8
+    }
+
+    unsafe fn from_rank_unsafe(r: u8) -> Self {
+        debug_assert!(r < Self::cardinality());
+        std::mem::transmute::<u8, Self>(r)
     }
 
     fn variants() -> Vec<Self> {
         use super::CodonTag::*;
         vec![Start, Res, StartRes, Stop, StartStop, StopRes, Any]
     }
-
-    fn redundancy(&self) -> Vec<Self> {
-        use super::CodonTag::*;
-        match self {
-            StartRes => vec![Start, Res],
-            StartStop => vec![Start, Stop],
-            StopRes => vec![Res, Stop],
-            Any => vec![Start, Res, StartRes, Stop, StartStop, StopRes],
-            _ => Vec::new(), // NB won't allocate until element pushed onto it.
-        }
-    }
 }
+
 
 impl Match<CodonTag> for CodonTag {
     fn matches(&self, other: &CodonTag) -> bool {

@@ -1,12 +1,11 @@
 //! A fully redundant DNA alphabet.
+use std::convert::TryFrom;
 
 use crate::alphabet::DNA4;
 use crate::complement::Complement;
 use crate::errors::{SeqError, SeqErrorKind};
-use crate::gapped::Gapped;
 use crate::matcher::{Match, RedundantAlphabet};
-
-use std::convert::TryFrom;
+use crate::alphabet::Alphabet;
 
 /// A fully redundant DNA alphabet represented as an enum.
 #[repr(u8)]
@@ -30,52 +29,6 @@ pub enum DNA {
 }
 
 impl DNA {
-    /// The names of the bases or redundant bases.
-    pub fn name(&self) -> String {
-        match &self {
-            DNA::A => String::from("Alanine"),
-            DNA::C => String::from("Cytosine"),
-            DNA::M => String::from("Alanine or Cytosine"),
-            DNA::G => String::from("Guanine"),
-            DNA::R => String::from("Alanine or Guanine"),
-            DNA::S => String::from("Cytosine or Guanine"),
-            DNA::V => String::from("Alanine, Cytosine, or Guanine"),
-            DNA::T => String::from("Thymine"),
-            DNA::W => String::from("Alanine or Thymine"),
-            DNA::Y => String::from("Cytosine or Thymine"),
-            DNA::H => String::from("Alanine, Cytosine, or Thymine"),
-            DNA::K => String::from("Guanine or Thymine"),
-            DNA::D => String::from("Alanine, Guanine, or Thymine"),
-            DNA::B => String::from("Cytosine, Guanine, or Thymine"),
-            DNA::N => String::from("Any nucleotide"),
-        }
-    }
-
-    /// Returns a Vec of all of the Enum variants.
-    pub fn variants() -> Vec<Self> {
-        vec![
-            DNA::A,
-            DNA::C,
-            DNA::M,
-            DNA::G,
-            DNA::R,
-            DNA::S,
-            DNA::V,
-            DNA::T,
-            DNA::W,
-            DNA::Y,
-            DNA::H,
-            DNA::K,
-            DNA::D,
-            DNA::B,
-            DNA::N,
-        ]
-    }
-
-    /// The number of letters in this alphabet.
-    pub fn cardinality() -> usize {
-        15
-    }
 
     /// For redundant matches, returns a vec of each non-redundant
     /// base that it contains.
@@ -98,19 +51,43 @@ impl DNA {
     }
 }
 
-impl From<&DNA> for DNA {
-    fn from(b: &Self) -> Self {
-        *b
+impl Alphabet for DNA {
+    /// The number of letters in this alphabet.
+    fn cardinality() -> u8 {
+        15
+    }
+
+    fn rank(&self) -> u8 {
+        (*self as u8) - 1
+    }
+
+    unsafe fn from_rank_unsafe(r: u8) -> Self {
+        debug_assert!(r < Self::cardinality());
+        std::mem::transmute::<u8, Self>(r + 1)
+    }
+
+    /// Returns a Vec of all of the Enum variants.
+    fn variants() -> Vec<Self> {
+        vec![
+            DNA::A,
+            DNA::C,
+            DNA::M,
+            DNA::G,
+            DNA::R,
+            DNA::S,
+            DNA::V,
+            DNA::T,
+            DNA::W,
+            DNA::Y,
+            DNA::H,
+            DNA::K,
+            DNA::D,
+            DNA::B,
+            DNA::N,
+        ]
     }
 }
 
-impl Default for DNA {
-    /// Returns [`N`][DNA::N].
-    #[inline]
-    fn default() -> Self {
-        DNA::N
-    }
-}
 
 try_from_borrowed! {
     impl TryFrom<&u8> for DNA {
@@ -326,7 +303,17 @@ mod tests {
 
     #[test]
     fn test_cardinality() {
-        assert_eq!(DNA::cardinality(), 15);
+        assert_eq!(DNA::cardinality() as usize, DNA::variants().len());
+    }
+
+    #[test]
+    fn test_redundant_matches() {
+        for base in DNA::variants() {
+            assert!(base.matches(&base));
+            for red_base in base.redundant_matches() {
+                assert!(base.matches(&red_base));
+            }
+        }
     }
 
     #[test]

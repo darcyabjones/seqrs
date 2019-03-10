@@ -1,22 +1,8 @@
-use crate::alphabet::DNA4;
-use crate::codon::Codon;
-
-/// Simple perfect hash function for 3-mers.
-fn codon_index(c: &Codon<DNA4>) -> usize {
-    let Codon(b1, b2, b3) = c;
-    let b1 = (*b1 as usize) * 16;
-    let b2 = (*b2 as usize) * 4;
-    let b3 = *b3 as usize);
-    b1 + b2 + b3
-}
-
 mod trans {
-    use super::codon_index;
     use crate::alphabet::AA;
     use crate::alphabet::AA::*;
     use crate::alphabet::DNA4;
     use crate::codon::Codon;
-    use crate::gapped::Gapped;
     use crate::stopped::Stopped;
     use crate::stopped::Stopped::{Res, Stop, StopOr};
     use crate::translate::NCBITransTable;
@@ -25,7 +11,7 @@ mod trans {
 
     impl<T> TranslationTable<Codon<DNA4>, Stopped<AA>> for NCBITransTable {
         fn get(&self, k: &T) -> Stopped<AA> {
-            let index = codon_index(&k);
+            let index = k.rank();
             match self {
                 Standard => CODONS_STANDARD[index],
                 VertebrateMito => CODONS_VERTEBRATE_MITO[index],
@@ -89,19 +75,17 @@ mod trans {
 }
 
 mod tags {
-    use super::codon_index;
     use crate::alphabet::CodonTag;
     use crate::alphabet::CodonTag::*;
     use crate::alphabet::DNA4;
     use crate::codon::Codon;
-    use crate::gapped::Gapped;
     use crate::translate::CodonTagTable;
     use crate::translate::NCBITransTable;
     use crate::translate::NCBITransTable::*;
 
     impl CodonTagTable<Codon<DNA4>, CodonTag> for NCBITransTable {
         fn get_tag(&self, k: &Codon<DNA4>) -> CodonTag {
-            let index = codon_index(&k);
+            let index = k.rank();
             match self {
                 Standard => TAGS_STANDARD[index],
                 VertebrateMito => TAGS_VERTEBRATE_MITO[index],
@@ -171,6 +155,7 @@ mod tests {
     use crate::translate::CodonTagTable;
     use crate::translate::NCBITransTable;
     use crate::translate::TranslationTable;
+    use crate::alphabet::Alphabet;
 
     use proptest::sample::select;
     use proptest::{proptest, proptest_helper};

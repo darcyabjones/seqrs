@@ -1,8 +1,11 @@
-use crate::errors::{SeqError, SeqErrorKind};
 /// Definitions for the Protein alphabet
-use crate::matcher::{Match, RedundantAlphabet};
 use std::convert::TryFrom;
 
+use crate::matcher::{Match, RedundantAlphabet};
+use crate::errors::{SeqError, SeqErrorKind};
+use crate::alphabet::Alphabet;
+
+#[repr(u8)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum AA {
     A,
@@ -34,41 +37,6 @@ pub enum AA {
 }
 
 impl AA {
-    pub fn variants() -> Vec<Self> {
-        vec![
-            AA::A,
-            AA::B,
-            AA::C,
-            AA::D,
-            AA::E,
-            AA::F,
-            AA::G,
-            AA::H,
-            AA::I,
-            AA::J,
-            AA::K,
-            AA::L,
-            AA::M,
-            AA::N,
-            AA::O,
-            AA::P,
-            AA::Q,
-            AA::R,
-            AA::S,
-            AA::T,
-            AA::U,
-            AA::V,
-            AA::W,
-            AA::X,
-            AA::Y,
-            AA::Z,
-        ]
-    }
-
-    pub fn cardinality() -> usize {
-        26
-    }
-
     pub fn is_iupac(&self) -> bool {
         match &self {
             AA::A => true,
@@ -100,6 +68,7 @@ impl AA {
         }
     }
 
+    /*
     pub fn name(&self) -> String {
         match &self {
             AA::A => String::from("Alanine"),
@@ -130,6 +99,7 @@ impl AA {
             AA::Z => String::from("Glutamine or Glutamic acid"),
         }
     }
+    */
 
     fn redundant_matches(&self) -> Vec<Self> {
         use super::AA::*;
@@ -145,11 +115,51 @@ impl AA {
     }
 }
 
-impl Default for AA {
-    /// Returns [`X`][AA::X].
-    #[inline]
-    fn default() -> Self {
-        AA::X
+impl Alphabet for AA {
+    /// The number of letters in this alphabet.
+    fn cardinality() -> u8 {
+        26
+    }
+
+    fn rank(&self) -> u8 {
+        *self as u8
+    }
+
+    unsafe fn from_rank_unsafe(r: u8) -> Self {
+        debug_assert!(r < Self::cardinality());
+        std::mem::transmute::<u8, Self>(r)
+    }
+
+    /// Returns a Vec of all of the Enum variants.
+    fn variants() -> Vec<Self> {
+        vec![
+            AA::A,
+            AA::B,
+            AA::C,
+            AA::D,
+            AA::E,
+            AA::F,
+            AA::G,
+            AA::H,
+            AA::I,
+            AA::J,
+            AA::K,
+            AA::L,
+            AA::M,
+            AA::N,
+            AA::O,
+            AA::P,
+            AA::Q,
+            AA::R,
+            AA::S,
+            AA::T,
+            AA::U,
+            AA::V,
+            AA::W,
+            AA::X,
+            AA::Y,
+            AA::Z,
+        ]
     }
 }
 
@@ -317,12 +327,12 @@ impl RedundantAlphabet for AA {
             (AA::N, AA::B) => None,
             (AA::J, AA::I) => Some(AA::L),
             (AA::J, AA::L) => Some(AA::I),
-            (AA::I, AA::J) => Some(AA::L),
-            (AA::L, AA::J) => Some(AA::I),
+            (AA::I, AA::J) => None,
+            (AA::L, AA::J) => None,
             (AA::Z, AA::E) => Some(AA::Q),
             (AA::Z, AA::Q) => Some(AA::E),
-            (AA::E, AA::Z) => Some(AA::Q),
-            (AA::Q, AA::Z) => Some(AA::E),
+            (AA::E, AA::Z) => None,
+            (AA::Q, AA::Z) => None,
             (a, _) => Some(*a),
         }
     }
@@ -344,7 +354,17 @@ mod tests {
 
     #[test]
     fn test_cardinality() {
-        assert_eq!(AA::cardinality(), 26);
+        assert_eq!(AA::cardinality() as usize, AA::variants().len());
+    }
+
+    #[test]
+    fn test_redundant_matches() {
+        for aa in AA::variants() {
+            assert!(aa.matches(&aa));
+            for red_aa in aa.redundant_matches() {
+                assert!(aa.matches(&red_aa));
+            }
+        }
     }
 
     proptest! {
