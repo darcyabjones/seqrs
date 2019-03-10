@@ -1,11 +1,11 @@
 //! A fully redundant DNA alphabet.
 use std::convert::TryFrom;
 
+use crate::alphabet::Alphabet;
 use crate::alphabet::DNA4;
 use crate::complement::Complement;
 use crate::errors::{SeqError, SeqErrorKind};
 use crate::matcher::{Match, RedundantAlphabet};
-use crate::alphabet::Alphabet;
 
 /// A fully redundant DNA alphabet represented as an enum.
 #[repr(u8)]
@@ -29,7 +29,6 @@ pub enum DNA {
 }
 
 impl DNA {
-
     /// For redundant matches, returns a vec of each non-redundant
     /// base that it contains.
     fn redundant_matches(&self) -> Vec<Self> {
@@ -87,7 +86,6 @@ impl Alphabet for DNA {
         ]
     }
 }
-
 
 try_from_borrowed! {
     impl TryFrom<&u8> for DNA {

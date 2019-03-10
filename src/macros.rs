@@ -428,8 +428,6 @@ macro_rules! impl_tables {
     }
 }
 
-
-
 /*
 #[cfg(test)]
 mod tests {

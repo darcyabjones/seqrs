@@ -1,9 +1,9 @@
 /// Definitions for the Protein alphabet
 use std::convert::TryFrom;
 
-use crate::matcher::{Match, RedundantAlphabet};
-use crate::errors::{SeqError, SeqErrorKind};
 use crate::alphabet::Alphabet;
+use crate::errors::{SeqError, SeqErrorKind};
+use crate::matcher::{Match, RedundantAlphabet};
 
 #[repr(u8)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]

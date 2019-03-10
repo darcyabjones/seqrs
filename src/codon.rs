@@ -240,7 +240,6 @@ impl<T> Codon<T> {
 }
 
 impl<T: Alphabet + Clone> Codon<T> {
-
     /// The number of possible codons given the alphabet.
     pub fn cardinality() -> usize {
         let size = T::cardinality() as u32;
@@ -253,7 +252,7 @@ impl<T: Alphabet + Clone> Codon<T> {
         let b1 = (self.first().rank() as usize) * size.pow(2);
         let b2 = (self.second().rank() as usize) * size;
         let b3 = self.third().rank() as usize;
-        return b1 + b2 + b3
+        return b1 + b2 + b3;
     }
 
     pub fn variants() -> Vec<Self> {

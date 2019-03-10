@@ -98118,12 +98118,12 @@ mod tags {
 
 #[cfg(test)]
 mod tests {
+    use crate::alphabet::Alphabet;
     use crate::alphabet::DNA;
     use crate::codon::Codon;
     use crate::translate::CodonTagTable;
     use crate::translate::NCBITransTable;
     use crate::translate::TranslationTable;
-    use crate::alphabet::Alphabet;
 
     //use test::{Bencher, black_box};
     use proptest::sample::select;

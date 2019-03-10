@@ -1,5 +1,5 @@
-use crate::matcher::{Match, RedundantAlphabet};
 use crate::alphabet::Alphabet;
+use crate::matcher::{Match, RedundantAlphabet};
 
 #[repr(u8)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
@@ -45,7 +45,6 @@ impl Alphabet for CodonTag {
         vec![Start, Res, StartRes, Stop, StartStop, StopRes, Any]
     }
 }
-
 
 impl Match<CodonTag> for CodonTag {
     fn matches(&self, other: &CodonTag) -> bool {

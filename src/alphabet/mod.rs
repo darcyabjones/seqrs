@@ -1,17 +1,15 @@
 mod aa;
 mod dna;
 mod dna4;
-mod tags;
 mod tables;
+mod tags;
 
 pub use self::aa::AA;
 pub use self::dna::DNA;
 pub use self::dna4::DNA4;
 pub use self::tags::CodonTag;
 
-
 pub trait Alphabet: Sized {
-
     /// The size of the alphabet.
     /// E.G. A non-redundant dna alphabet has a cardinality of 4 (A, T, G, C).
     fn cardinality() -> u8;
@@ -33,7 +31,7 @@ pub trait Alphabet: Sized {
     /// rank < cardinality will be valid.
     fn from_rank(r: u8) -> Option<Self> {
         if r < Self::cardinality() {
-            Some( unsafe { Self::from_rank_unsafe(r) } )
+            Some(unsafe { Self::from_rank_unsafe(r) })
         } else {
             None
         }

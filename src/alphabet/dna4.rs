@@ -1,11 +1,11 @@
 //! A standard non-redundant DNA alphabet.
 use std::convert::TryFrom;
 
+use crate::alphabet::Alphabet;
 use crate::alphabet::DNA;
 use crate::complement::Complement;
 use crate::errors::{SeqError, SeqErrorKind};
 use crate::matcher::Match;
-use crate::alphabet::Alphabet;
 
 /// A Non-redundant four letter DNA alphabet.
 #[repr(u8)]
@@ -16,7 +16,6 @@ pub enum DNA4 {
     G = 0b10,
     T = 0b11,
 }
-
 
 impl Alphabet for DNA4 {
     /// The number of letters in this alphabet.
@@ -38,7 +37,6 @@ impl Alphabet for DNA4 {
         vec![DNA4::A, DNA4::C, DNA4::G, DNA4::T]
     }
 }
-
 
 try_from_borrowed! {
     impl TryFrom<&u8> for DNA4 {
