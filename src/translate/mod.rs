@@ -4,7 +4,6 @@
 //! The tables are implemented as empty structs that act as tokens for which
 //! implementation of the `TranslationTable` trait to use.
 
-mod dna_aa;
 mod tags;
 mod trans;
 

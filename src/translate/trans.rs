@@ -1,3 +1,5 @@
+//! Traits and iterators for Codon translation into amino acids.
+
 use std::marker::PhantomData;
 
 /// TranslationTable is a wrapper around some mapping function.
