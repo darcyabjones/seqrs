@@ -255,6 +255,21 @@ impl<T: Alphabet + Clone> Codon<T> {
         return b1 + b2 + b3;
     }
 
+    pub fn from_rank(r: usize) -> Option<Self> {
+        let size = T::cardinality() as usize;
+
+        let rem = r % size.pow(2);
+
+        let b1_rank = r / size.pow(2);
+        let b2_rank = rem / size;
+        let b3_rank = rem % size;
+
+        let b1 = T::from_rank(b1_rank)?;
+        let b2 = T::from_rank(b2_rank)?;
+        let b3 = T::from_rank(b3_rank)?;
+        Some(Codon(b1, b2, b3))
+    }
+
     pub fn variants() -> Vec<Self> {
         let mut output = Vec::with_capacity(Self::cardinality());
         for b1 in T::variants() {
