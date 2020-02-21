@@ -2,8 +2,9 @@
 use std::convert::TryFrom;
 
 use crate::alphabet::Alphabet;
+use crate::alphabet::RedundantAlphabet;
+use crate::matcher::Match;
 use crate::errors::{SeqError, SeqErrorKind};
-use crate::matcher::{Match, RedundantAlphabet};
 
 #[repr(u8)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
@@ -117,17 +118,17 @@ impl AA {
 
 impl Alphabet for AA {
     /// The number of letters in this alphabet.
-    fn cardinality() -> u8 {
+    fn cardinality() -> usize {
         26
     }
 
-    fn rank(&self) -> u8 {
-        *self as u8
+    fn rank(&self) -> usize {
+        *self as usize
     }
 
-    unsafe fn from_rank_unsafe(r: u8) -> Self {
+    unsafe fn from_rank_unsafe(r: usize) -> Self {
         debug_assert!(r < Self::cardinality());
-        std::mem::transmute::<u8, Self>(r)
+        std::mem::transmute::<u8, Self>(r as u8)
     }
 
     /// Returns a Vec of all of the Enum variants.

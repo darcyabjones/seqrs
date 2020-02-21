@@ -1,5 +1,6 @@
 use crate::alphabet::Alphabet;
-use crate::matcher::{Match, RedundantAlphabet};
+use crate::alphabet::RedundantAlphabet;
+use crate::matcher::Match;
 
 #[repr(u8)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
@@ -27,17 +28,17 @@ impl CodonTag {
 }
 
 impl Alphabet for CodonTag {
-    fn cardinality() -> u8 {
+    fn cardinality() -> usize {
         7
     }
 
-    fn rank(&self) -> u8 {
-        *self as u8
+    fn rank(&self) -> usize {
+        *self as usize
     }
 
-    unsafe fn from_rank_unsafe(r: u8) -> Self {
+    unsafe fn from_rank_unsafe(r: usize) -> Self {
         debug_assert!(r < Self::cardinality());
-        std::mem::transmute::<u8, Self>(r)
+        std::mem::transmute::<u8, Self>(r as u8)
     }
 
     fn variants() -> Vec<Self> {

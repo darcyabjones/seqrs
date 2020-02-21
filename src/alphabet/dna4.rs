@@ -19,17 +19,17 @@ pub enum DNA4 {
 
 impl Alphabet for DNA4 {
     /// The number of letters in this alphabet.
-    fn cardinality() -> u8 {
+    fn cardinality() -> usize {
         4
     }
 
-    fn rank(&self) -> u8 {
-        *self as u8
+    fn rank(&self) -> usize {
+        *self as usize
     }
 
-    unsafe fn from_rank_unsafe(r: u8) -> Self {
+    unsafe fn from_rank_unsafe(r: usize) -> Self {
         debug_assert!(r < Self::cardinality());
-        std::mem::transmute::<u8, Self>(r)
+        std::mem::transmute::<u8, Self>(r as u8)
     }
 
     /// Returns a Vec of all of the Enum variants.

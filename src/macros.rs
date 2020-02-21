@@ -2,6 +2,7 @@
 ///
 ///
 
+
 /// A helper macro to implement `TryFrom` for owned and borrowed variants.
 #[macro_export]
 macro_rules! try_from_borrowed {
@@ -83,7 +84,6 @@ macro_rules! from_borrowed {
 }
 
 /// Creates a single letter biological alphabet.
-///
 #[macro_export]
 macro_rules! alphabet {
     (   // Entry point handles non-public enum case.

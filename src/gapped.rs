@@ -2,7 +2,6 @@
 //!
 //! Gapped alphabets extend regular alphabets with a sum type and wrapping
 //! the base in a tuple struct.
-//!
 
 use std::convert::TryFrom;
 use std::fmt;

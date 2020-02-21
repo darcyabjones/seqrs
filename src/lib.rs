@@ -16,6 +16,7 @@ pub mod errors;
 pub mod codon;
 pub mod complement;
 pub mod gapped;
-pub mod matcher;
 pub mod stopped;
 pub mod translate;
+pub mod matcher;
+pub mod kmer;

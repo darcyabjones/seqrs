@@ -239,15 +239,15 @@ impl<T> Codon<T> {
     }
 }
 
-impl<T: Alphabet + Clone> Codon<T> {
+impl<T: Alphabet + Clone> Alphabet for Codon<T> {
     /// The number of possible codons given the alphabet.
-    pub fn cardinality() -> usize {
-        let size = T::cardinality() as u32;
-        3_u32.pow(size) as usize
+    fn cardinality() -> usize {
+        let size = T::cardinality() as usize;
+        3_usize.pow(size as u32)
     }
 
     /// The unique numeric rank for this 3-mer.
-    pub fn rank(&self) -> usize {
+    fn rank(&self) -> usize {
         let size = T::cardinality() as usize;
         let b1 = (self.first().rank() as usize) * size.pow(2);
         let b2 = (self.second().rank() as usize) * size;
@@ -255,7 +255,34 @@ impl<T: Alphabet + Clone> Codon<T> {
         return b1 + b2 + b3;
     }
 
-    pub fn variants() -> Vec<Self> {
+    unsafe fn from_rank_unsafe(r: usize) -> Self {
+        // Get individual ranks.
+        let r1 = r / T::cardinality().pow(2);
+        let rem = r % T::cardinality().pow(2);
+        let r2 = rem / T::cardinality();
+        let r3 = rem % T::cardinality();
+
+        // Convert to underlying alphabet.
+        let b1 = T::from_rank_unsafe(r1);
+        let b2 = T::from_rank_unsafe(r2);
+        let b3 = T::from_rank_unsafe(r3);
+        Codon(b1, b2, b3)
+    }
+
+    fn from_rank(r: usize) -> Option<Self> {
+        // Get individual ranks.
+        let r1 = r / T::cardinality().pow(2);
+        let rem = r % T::cardinality().pow(2);
+        let r2 = rem / T::cardinality();
+        let r3 = rem % T::cardinality();
+
+        let b1 = T::from_rank(r1)?;
+        let b2 = T::from_rank(r2)?;
+        let b3 = T::from_rank(r3)?;
+        Some(Codon(b1, b2, b3))
+    }
+
+    fn variants() -> Vec<Self> {
         let mut output = Vec::with_capacity(Self::cardinality());
         for b1 in T::variants() {
             for b2 in T::variants() {

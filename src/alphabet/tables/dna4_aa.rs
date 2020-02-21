@@ -1,4 +1,5 @@
 mod trans {
+    use crate::alphabet::Alphabet;
     use crate::alphabet::AA;
     use crate::alphabet::AA::*;
     use crate::alphabet::DNA4;
@@ -1830,6 +1831,7 @@ mod trans {
 }
 
 mod tags {
+    use crate::alphabet::Alphabet;
     use crate::alphabet::CodonTag;
     use crate::alphabet::CodonTag::*;
     use crate::alphabet::DNA4;

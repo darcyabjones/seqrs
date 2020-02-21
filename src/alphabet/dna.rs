@@ -2,10 +2,11 @@
 use std::convert::TryFrom;
 
 use crate::alphabet::Alphabet;
+use crate::alphabet::RedundantAlphabet;
+use crate::matcher::Match;
 use crate::alphabet::DNA4;
 use crate::complement::Complement;
 use crate::errors::{SeqError, SeqErrorKind};
-use crate::matcher::{Match, RedundantAlphabet};
 
 /// A fully redundant DNA alphabet represented as an enum.
 #[repr(u8)]
@@ -52,17 +53,17 @@ impl DNA {
 
 impl Alphabet for DNA {
     /// The number of letters in this alphabet.
-    fn cardinality() -> u8 {
+    fn cardinality() -> usize {
         15
     }
 
-    fn rank(&self) -> u8 {
-        (*self as u8) - 1
+    fn rank(&self) -> usize {
+        (*self as usize) - 1
     }
 
-    unsafe fn from_rank_unsafe(r: u8) -> Self {
+    unsafe fn from_rank_unsafe(r: usize) -> Self {
         debug_assert!(r < Self::cardinality());
-        std::mem::transmute::<u8, Self>(r + 1)
+        std::mem::transmute::<u8, Self>((r + 1) as u8)
     }
 
     /// Returns a Vec of all of the Enum variants.
